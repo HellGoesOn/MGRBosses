@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MGRBosses", "MGRBosses.csproj", "{8593CFD0-6988-49C6-B3EA-1609E2ED6FEB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8593CFD0-6988-49C6-B3EA-1609E2ED6FEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8593CFD0-6988-49C6-B3EA-1609E2ED6FEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8593CFD0-6988-49C6-B3EA-1609E2ED6FEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8593CFD0-6988-49C6-B3EA-1609E2ED6FEB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BF43415C-C76E-4E55-88ED-4CCB83C18D53}
+	EndGlobalSection
+EndGlobal
