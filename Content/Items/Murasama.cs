@@ -10,6 +10,11 @@ namespace BladeMode.Content.Items
 	{
         public override string Texture => "MGRBosses/Content/Textures/Items/Murasama";
 
+		public override void SetStaticDefaults()
+		{
+			DisplayName.SetDefault("VT-7 HF Blade");
+		}
+
         public override void SetDefaults()
 		{
 			Item.damage = 40;

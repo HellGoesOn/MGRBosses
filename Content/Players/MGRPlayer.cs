@@ -21,15 +21,17 @@ namespace MGRBosses.Content.Players
 
         public CameraOverride CameraOverride { get; set; }
 
+        public bool HasActiveBladeMode => Player.ownedProjectileCounts[ModContent.ProjectileType<BladeModeProjectile>()] > 0;
+
         public override void ProcessTriggers(TriggersSet triggersSet)
         {
-            if(InputSystem.BladeMode.JustPressed && Player.ownedProjectileCounts[ModContent.ProjectileType<BladeModeProjectile>()] <= 0)
+            if(InputSystem.BladeMode.JustPressed && !HasActiveBladeMode)
             {
                 Projectile.NewProjectile(Player.GetSource_Misc("BladeMode"),
                     Player.Center + (Player.Center- Main.MouseWorld).SafeNormalize(-Vector2.UnitY) * 180, 
                     Vector2.Zero,
                     ModContent.ProjectileType<BladeModeProjectile>(), 
-                    0, 0, Player.whoAmI);
+                    0, 0, Main.myPlayer);
             }
         }
 
@@ -101,6 +103,7 @@ namespace MGRBosses.Content.Players
 
         public override void ResetEffects()
         {
+
             if(CameraOverride.Source != null && !CameraOverride.Source.active)
             {
                 ResetCameraOverride();

@@ -14,6 +14,7 @@ namespace MGRBosses.Content.Items
     {
         public override void MeleeEffects(Item item, Player player, Rectangle hitbox)
         {
+            /*
             List<Projectile> projectiles = Main.projectile.Where(x => x.ModProjectile is Wreckage && x.active).ToList();
             
             if(player.HasBuff<ParryBuff>())
@@ -31,7 +32,7 @@ namespace MGRBosses.Content.Items
                         }
                         proj.Kill();
                 }
-            }
+            }*/
         }
     }
 }

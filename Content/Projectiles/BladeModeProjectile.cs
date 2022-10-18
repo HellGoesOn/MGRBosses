@@ -1,4 +1,5 @@
 ﻿using MGRBosses.Common;
+using MGRBosses.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
+using static Terraria.Player;
 
 namespace MGRBosses.Content.Projectiles
 {
@@ -31,13 +33,15 @@ namespace MGRBosses.Content.Projectiles
         }
     }
 
-    public class BladeModeProjectile : ModProjectile
+    public partial class BladeModeProjectile : ModProjectile
     {
+        public const int BladeModeSize = 300; 
+
         public override string Texture => "MGRBosses/Content/Textures/Items/Murasama";
 
         public override void SetDefaults()
         {
-            Projectile.width = Projectile.height = 300;
+            Projectile.width = Projectile.height = BladeModeSize;
             Projectile.friendly = true;
             Projectile.penetrate = -1;
             Projectile.tileCollide = false;
@@ -61,11 +65,11 @@ namespace MGRBosses.Content.Projectiles
         private float cutAngle;
         private float angleChangeSpeed;
 
-        private Vector2 cutStartPos;
-        private Vector2 cutProgressPos;
-        private Vector2 cutDestination;
+        internal Vector2 cutStartPos;
+        internal Vector2 cutProgressPos;
+        internal Vector2 cutDestination;
 
-        private float cutProgress;
+        internal float cutProgress;
 
         private int directionFixer;
 
@@ -103,13 +107,19 @@ namespace MGRBosses.Content.Projectiles
         {
             if (!initialized)
             {
-                Projectile.damage = 1000;
+                InitializeSword();
+                Projectile.damage = 10;
                 Projectile.ai[0] = 1;
                 positionOffset = Owner.Center - Projectile.Center;
                 initialized = true; 
                 cutAngle = MathHelper.Pi;
             }
 
+            positionOffset = (Main.MouseWorld - Owner.Center).SafeNormalize(-Vector2.UnitY) * 160;
+
+
+            Projectile.Center = Owner.Center + positionOffset + new Vector2(0, Owner.gfxOffY);
+            Owner.direction = Projectile.Center.X < Owner.Center.X ? -1 : 1;
             return base.PreAI();
         }
 
@@ -120,9 +130,19 @@ namespace MGRBosses.Content.Projectiles
             if (cutProgress <= 0 || targetWeakspot == null)
                 return false;
 
-            bool counter = targetWeakspot.All(x => x.Exposed);
-            if(counter)
-                return base.CanHitNPC(target);
+            bool counter = targetWeakspot.All(x => x.Exposed) && targetWeakspot.Count > 0;
+
+            if (counter)
+            {
+                int x = (int)(target.Center.X - BladeModeSize / 2 - Main.screenPosition.X);
+                int y = (int)(target.Center.Y - BladeModeSize / 2 - Main.screenPosition.Y);
+                var rect = worldRect;
+                var newRect = new Rectangle(x, y, BladeModeSize, BladeModeSize);
+                BladeModeSystem.HackerRectangle = newRect;
+                BladeModeSystem.hackyTargetNeedsUpdate = true;
+                Weakspots.RemoveAll(x => x.Owner == target);
+                return true;//base.CanHitNPC(target);
+            }
 
             return false;
         }
@@ -130,6 +150,7 @@ namespace MGRBosses.Content.Projectiles
         public override void AI()
         {
             Projectile.netUpdate = true;
+            testTimer += 0.06f;
 
             if (Main.myPlayer == Projectile.owner)
             {
@@ -138,6 +159,12 @@ namespace MGRBosses.Content.Projectiles
 
                 if(Owner.controlUseItem && !oldControlUseItem && cutProgress <= 0)
                 {
+                    int x = (int)(Projectile.position.X - Main.screenPosition.X);
+                    int y = (int)(Projectile.position.Y - Main.screenPosition.Y);
+
+                    worldRect = new Rectangle(x, y, Projectile.width, Projectile.height);
+                    SetSwordAngle();
+
                     cutProgress = 1;
                     Projectile.ai[0] *= -1;
                 }
@@ -173,25 +200,20 @@ namespace MGRBosses.Content.Projectiles
                     initializedList = false;
                 }
             }
-
-            positionOffset = (Main.MouseWorld - Owner.Center).SafeNormalize(-Vector2.UnitY) * 180;
-            if (cutProgress >= 0)
+            if (cutProgress > 0)
             {
                 cutProgressPos = Vector2.Lerp(cutStartPos, cutDestination, 1-cutProgress);
                 cutProgress -= 0.12f;
             }
             else
-            if(cutProgress  != -100)
             {
                 directionFixer = (int)Projectile.ai[0];
-                cutProgress = -100;
+                cutProgress = 0;
             }
 
             //cutAngle = (Projectile.Center - Main.MouseWorld).SafeNormalize(-Vector2.UnitY).ToRotation();
 
             Owner.heldProj = Projectile.whoAmI;
-
-            Projectile.Center = Owner.Center + positionOffset + new Vector2(0, Owner.gfxOffY);
 
             if(Projectile.timeLeft <= 10)
                 Projectile.timeLeft = 10;
@@ -204,8 +226,6 @@ namespace MGRBosses.Content.Projectiles
             cutStartPos = Vector2.Clamp(cutStartPos, Projectile.position, Projectile.position + Projectile.Size);
             cutDestination = Vector2.Clamp(cutDestination, Projectile.position, Projectile.position + Projectile.Size);
 
-            Owner.direction = Projectile.Center.X < Owner.Center.X ? -1 : 1;
-
             cutAngle = (float)Math.Clamp(cutAngle, -MathHelper.TwoPi, MathHelper.TwoPi);
         }
 
@@ -214,30 +234,29 @@ namespace MGRBosses.Content.Projectiles
             return false;
         }
 
+        public Rectangle worldRect;
+
+        public float testTimer;
+
         public override void PostDraw(Color lightColor)
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Texture2D sword = ModContent.Request<Texture2D>("MGRBosses/Content/Textures/Items/Murasama").Value;
 
-
-            bool flip = Projectile.ai[0] == -1;
-            Vector2 origin = !flip ? new Vector2(sword.Width, sword.Height) : new Vector2(0, sword.Height);
-
-            SpriteEffects effects = !flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-
-            float swordAngle = (Owner.Center - Main.MouseWorld).SafeNormalize(-Vector2.UnitY).ToRotation();
-
-            MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.12f, Color.LightCyan * 0.5f, Main.spriteBatch);
-            Main.EntitySpriteDraw(sword, Owner.Center - Main.screenPosition, null, Color.White, swordAngle + MathHelper.PiOver2- MathHelper.PiOver4 * Projectile.ai[0], origin, 1, effects, 1);
-
-
-            if(cutProgress >= 0)
-                MGRBosses.Line(cutProgressPos, cutDestination, 6f, Color.Crimson);
+            if (cutProgress > 0)
+            {
+                MGRBosses.Line(cutProgressPos.FloatToInt(), cutDestination.FloatToInt(), 6f, Color.Crimson);
+            }
             else
-                MGRBosses.Line(cutStartPos, cutDestination, 1f, Color.LightCyan);
+            {
+                MGRBosses.Line(cutStartPos.FloatToInt(), cutDestination.FloatToInt(), 1f, Color.LightCyan);
+            }
 
-            MGRBosses.DrawBorderedRectangle(cutStartPos - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
-            MGRBosses.DrawBorderedRectangle(cutDestination - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
+            if (Projectile.timeLeft > 11)
+                return;
+            MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.05f, Color.LightCyan * 0.5f, Main.spriteBatch);
+
+            MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
+            MGRBosses.DrawBorderedRectangle(cutDestination.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
 
             foreach(Weakspot weakspot in Weakspots)
             {
@@ -245,6 +264,9 @@ namespace MGRBosses.Content.Projectiles
                 MGRBosses.DrawBorderedRectangle(weakspot.Owner.Center + weakspot.PositionOffset - Main.screenPosition, (int)weakspot.Size.X, (int)weakspot.Size.Y, weakSpotColor, Color.White, Main.spriteBatch);
                 //Main.EntitySpriteDraw(pixel, weakspot.Owner.Center + weakspot.PositionOffset - Main.screenPosition, new Rectangle(0, 0, (int)weakspot.Size.X, (int)weakspot.Size.Y), Color.Red * 0.15f, 0f, weakspot.Size * 0.5f, 1f, SpriteEffects.None, 1);
             }
+
+            GetSwordAngle();
+            DrawSword();
         }
     }
 }

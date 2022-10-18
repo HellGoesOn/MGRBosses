@@ -1,1 +1,7 @@
-Metal Gear Rising Bosses is a pretty cool mod, it does...this. Modify this file with a description of your mod.
+Metal Gear Rising Bosses adds bosses...from Metal Gear Rising...
+What did you expect?
+Also adds Blade Mode.
+
+Current Content:
+-Murasama, bland broadsword for now. WIP™
+-Monsoon. Requires a very long, flat surface for the fight. Git gud at parries and blade mode

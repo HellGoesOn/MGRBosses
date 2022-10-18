@@ -45,7 +45,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
 
         public override void AI()
         {
-            if(!launched)
+            if (!launched)
             {
                 triggeredParry = false;
                 Projectile.timeLeft = (int)Projectile.ai[1];
@@ -56,7 +56,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                 positionOffset = monsoonNPC.Center - Projectile.Center;
             }
 
-            if(Projectile.ai[0] < 0 || Projectile.ai[0] >= 255)
+            if (Projectile.ai[0] < 0 || Projectile.ai[0] >= 255)
             {
                 Projectile.Kill();
                 return;
@@ -65,7 +65,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
             if (scale < 1f)
                 scale += 0.012f;
 
-            if(Projectile.timeLeft > 120)
+            if (Projectile.timeLeft > 120)
             {
                 if ((soundTimer += Projectile.ai[1] * 0.75f) > (float)Math.PI)
                 {
@@ -88,9 +88,9 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                 Projectile.rotation = Utils.AngleLerp(Projectile.rotation, targetRotation, 0.225f);
             }
 
-            if(Projectile.timeLeft == 100)
+            if (Projectile.timeLeft == 100)
             {
-                Projectile.velocity = (target.Center + target.velocity- Projectile.Center).SafeNormalize(-Vector2.UnitY) * 16f;
+                Projectile.velocity = (target.Center + target.velocity - Projectile.Center).SafeNormalize(-Vector2.UnitY) * 16f;
                 Projectile.rotation = Projectile.velocity.ToRotation();
             }
 
@@ -101,17 +101,23 @@ namespace MGRBosses.Content.Projectiles.Monsoon
             }
             if (Projectile.timeLeft <= 100)
             {
-                if (Main.projectile.Any(x => Projectile.Hitbox.Intersects(x.Hitbox) && x.whoAmI != Projectile.whoAmI && x.active && x.type != Projectile.type && Main.player[x.owner].HasBuff<ParryBuff>()))
+                List<Projectile> bladeModes = Main.projectile.Where(x => x.active && x.ModProjectile is BladeModeProjectile).ToList();
+
+                foreach (Projectile blade in bladeModes)
                 {
-                    Projectile.Kill();
-
-                    int dropItemType = ModContent.ItemType<EMGrenade>();
-                    int newItem = Item.NewItem(Projectile.GetSource_DropAsItem(), Projectile.Hitbox, dropItemType);
-                    Main.item[newItem].noGrabDelay = 0;
-
-                    if (Main.netMode == NetmodeID.MultiplayerClient && newItem >= 0)
+                    BladeModeProjectile bl = blade.ModProjectile as BladeModeProjectile;
+                    if (bl != null && bl.cutProgress > 0 && Collision.CheckAABBvLineCollision(Projectile.position, Projectile.Size, bl.cutProgressPos, bl.cutDestination))
                     {
-                        NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);
+                        Projectile.Kill();
+
+                        int dropItemType = ModContent.ItemType<EMGrenade>();
+                        int newItem = Item.NewItem(Projectile.GetSource_DropAsItem(), Projectile.Hitbox, dropItemType);
+                        Main.item[newItem].noGrabDelay = 0;
+
+                        if (Main.netMode == NetmodeID.MultiplayerClient && newItem >= 0)
+                        {
+                            NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);
+                        }
                     }
                 }
             }
