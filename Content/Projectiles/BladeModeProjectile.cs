@@ -101,6 +101,8 @@ namespace MGRBosses.Content.Projectiles
                     spot.Exposed = true;
                 }
             }
+
+            oldControlUseItem = Owner.controlUseItem;
         }
 
         public override bool PreAI()
@@ -120,6 +122,15 @@ namespace MGRBosses.Content.Projectiles
 
             Projectile.Center = Owner.Center + positionOffset + new Vector2(0, Owner.gfxOffY);
             Owner.direction = Projectile.Center.X < Owner.Center.X ? -1 : 1;
+
+
+            cutStartPos = Projectile.Center + new Vector2(240 * -directionFixer, -20).RotatedBy(cutAngle);
+            cutDestination = cutStartPos + (Projectile.Center - cutStartPos).SafeNormalize(-Vector2.UnitY) * 480f;
+
+            cutStartPos = Vector2.Clamp(cutStartPos, Projectile.position, Projectile.position + Projectile.Size);
+            cutDestination = Vector2.Clamp(cutDestination, Projectile.position, Projectile.position + Projectile.Size);
+
+            cutAngle = (float)Math.Clamp(cutAngle, -MathHelper.TwoPi, MathHelper.TwoPi);
             return base.PreAI();
         }
 
@@ -164,7 +175,9 @@ namespace MGRBosses.Content.Projectiles
 
                     worldRect = new Rectangle(x, y, Projectile.width, Projectile.height);
                     SetSwordAngle();
-
+                    BladeModeSystem.cuttingLineStart = Projectile.Center+ (cutStartPos - Projectile.Center).SafeNormalize(-Vector2.UnitY) * 200f;
+                    BladeModeSystem.cuttingLineEnd = cutDestination + (cutDestination - Projectile.Center).SafeNormalize(-Vector2.UnitY) * 100f;
+                    BladeModeSystem.shouldUpdate = true;
                     cutProgress = 1;
                     Projectile.ai[0] *= -1;
                 }
@@ -217,16 +230,6 @@ namespace MGRBosses.Content.Projectiles
 
             if(Projectile.timeLeft <= 10)
                 Projectile.timeLeft = 10;
-
-            oldControlUseItem = Owner.controlUseItem;
-
-            cutStartPos = Projectile.Center + new Vector2(240 * -directionFixer, -20).RotatedBy(cutAngle);
-            cutDestination = cutStartPos + (Projectile.Center - cutStartPos).SafeNormalize(-Vector2.UnitY) * 480f;
-
-            cutStartPos = Vector2.Clamp(cutStartPos, Projectile.position, Projectile.position + Projectile.Size);
-            cutDestination = Vector2.Clamp(cutDestination, Projectile.position, Projectile.position + Projectile.Size);
-
-            cutAngle = (float)Math.Clamp(cutAngle, -MathHelper.TwoPi, MathHelper.TwoPi);
         }
 
         public override bool PreDraw(ref Color lightColor)
@@ -255,7 +258,7 @@ namespace MGRBosses.Content.Projectiles
                 return;
             MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.05f, Color.LightCyan * 0.5f, Main.spriteBatch);
 
-            MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
+            MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Violet, Main.spriteBatch) ;
             MGRBosses.DrawBorderedRectangle(cutDestination.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch) ;
 
             foreach(Weakspot weakspot in Weakspots)

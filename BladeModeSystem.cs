@@ -28,6 +28,8 @@ namespace MGRBosses
         public static RenderTarget2D screenReplicationTarget;
         public static RenderTarget2D cuttedPositionTarget;
 
+        internal static bool shouldUpdate;
+
         internal static Rectangle HackerRectangle;
 
         public override void Load()
@@ -69,6 +71,15 @@ namespace MGRBosses
                 Main.spriteBatch.End();
             }
 
+
+            /*Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.EffectMatrix);
+            foreach(var v in points)
+            {
+                MGRBosses.Line(cuttingLineStart, cuttingLineEnd, 2f, Color.Red);
+                MGRBosses.DrawBorderedRectangle(v - new Vector2(2) - Main.screenPosition, 6, 6, Color.Red * 0.5f, Color.White, Main.spriteBatch);
+            }
+            Main.spriteBatch.End();*/
+
             if (initialized)
                 DrawQuads();
 
@@ -81,8 +92,16 @@ namespace MGRBosses
 
         public KeyboardState old;
 
+        internal static Vector2 cuttingLineStart;
+        internal static Vector2 cuttingLineEnd;
+
+        internal static List<Vector2> points = new List<Vector2>();
+
         private void DrawQuads()
         {
+            foreach (Quadrilateral quad in Quadrilaterals)
+                quad.position += quad.velocity;
+
             KeyboardState ks = Keyboard.GetState();
 
             Texture2D sword = ModContent.Request<Texture2D>("MGRBosses/Content/Textures/Monsoon/PH").Value;
@@ -92,12 +111,14 @@ namespace MGRBosses
             if (ks.IsKeyDown(Keys.OemOpenBrackets))
                 drawPolygons = false;
 
-            if(ks.IsKeyDown(Keys.NumPad1) && old.IsKeyUp(Keys.NumPad1))
+            if((ks.IsKeyDown(Keys.NumPad1) && old.IsKeyUp(Keys.NumPad1)) || shouldUpdate)
             {
+                shouldUpdate = false;
                 List<Quadrilateral> newQuads = new List<Quadrilateral>();
+                points.Clear();
                 foreach(Quadrilateral q in Quadrilaterals)
                 {
-                    q.BreakDown(2, Quadrilaterals.Count*2,MathHelper.PiOver4).ForEach(x => newQuads.Add(x));
+                    q.Breakdown(cuttingLineStart,cuttingLineEnd, cuttedPositionTarget).ForEach(x => newQuads.Add(x));
                 }
                 Quadrilaterals.Clear();
                 foreach (Quadrilateral nq in newQuads)
@@ -118,7 +139,7 @@ namespace MGRBosses
                 {
                 Quadrilaterals.Clear();
                 currentSelection = 0;
-                Quadrilaterals.Add(new Quadrilateral(Main.LocalPlayer.position, new Vector2[6]
+                Quadrilaterals.Add(new Quadrilateral(Main.LocalPlayer.position + new Vector2(0, -150), new Vector2[6]
                 {
                     new Vector2(0, 0),
                     new Vector2(size, 0),
