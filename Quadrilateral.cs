@@ -124,7 +124,7 @@ namespace MGRBosses
                 var checkedLine = lines[i];
                 Line cuttingLine = GetLine(cuttingLineEnd, cuttingLineStart);
 
-                if(Intersects(cuttingLine, checkedLine, out var hector))
+                if(IntersectsV2(cuttingLine, checkedLine, out var hector))
                 {
                     intersectionPoints.Add(hector);
                     BladeModeSystem.points.Add(hector);
