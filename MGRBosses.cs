@@ -13,15 +13,14 @@ using Terraria.ModLoader;
 
 namespace MGRBosses
 {
-	public class MGRBosses : Mod
-	{
+    public class MGRBosses : Mod
+    {
         public override void Load()
         {
             base.Load();
 
-            if(!Main.dedServ)
-            {
-                Ref<Effect> screenRef = new Ref<Effect>(Assets.Request<Effect>("Content/Effects/ShockwaveEffect", AssetRequestMode.ImmediateLoad).Value);
+            if (!Main.dedServ) {
+                Ref<Effect> screenRef = new(Assets.Request<Effect>("Content/Effects/ShockwaveEffect", AssetRequestMode.ImmediateLoad).Value);
                 Filters.Scene["Shockwave"] = new Filter(new ScreenShaderData(screenRef, "Shockwave"), EffectPriority.VeryHigh);
                 Filters.Scene["Shockwave"].Load();
             }
@@ -30,13 +29,11 @@ namespace MGRBosses
 
         public static void TriggerParry(Vector2 visualEffectPosition)
         {
-            foreach (Player plr in Main.player.Where(x => x.active && x.whoAmI != 255))
-            {
+            foreach (Player plr in Main.player.Where(x => x.active && x.whoAmI != 255)) {
                 plr.AddBuff(ModContent.BuffType<ParryBuff>(), 10);
             }
 
-            for (int i = -160; i < 160; i++)
-            {
+            for (int i = -160; i < 160; i++) {
                 if (i > -10 && i < 10)
                     continue;
 
@@ -55,8 +52,8 @@ namespace MGRBosses
             Texture2D tex = ModContent.Request<Texture2D>("MGRBosses/Content/Textures/Laser").Value;
             Vector2 tan = (b - a);
             float rot = (float)Math.Atan2(tan.Y, tan.X);
-            Vector2 scale = new Vector2(tan.Length()+extraLength, thickness);
-            Vector2 middleOrigin = new Vector2(0, tex.Height / 2f);
+            Vector2 scale = new(tan.Length() + extraLength, thickness);
+            Vector2 middleOrigin = new(0, tex.Height / 2f);
 
             SpriteEffects sprfx = SpriteEffects.None;
 

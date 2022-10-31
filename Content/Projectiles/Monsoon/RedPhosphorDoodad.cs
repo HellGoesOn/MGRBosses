@@ -59,8 +59,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
         {
             SoundEngine.PlaySound(SoundID.Item14, Projectile.position);
 
-            for (int g = 0; g < 2; g++)
-            {
+            for (int g = 0; g < 2; g++) {
                 int goreIndex = Gore.NewGore(NPC.GetSource_None(), Projectile.Center, default, Main.rand.Next(61, 64), 1f);
                 Main.gore[goreIndex].scale = 1.5f;
                 Main.gore[goreIndex].velocity *= 1.5f;

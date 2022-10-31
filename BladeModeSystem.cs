@@ -18,15 +18,15 @@ namespace MGRBosses
 {
     public class BladeModeSystem : ModSystem
     {
-        internal GraphicsDevice device => Terraria.Main.graphics.GraphicsDevice;
+        internal static GraphicsDevice Device => Terraria.Main.graphics.GraphicsDevice;
 
         internal BasicEffect basicEffect;
         internal BasicEffect lineEffect;
         internal bool initialized;
         internal static bool hackyTargetNeedsUpdate;
 
-        public static RenderTarget2D screenReplicationTarget;
-        public static RenderTarget2D cuttedPositionTarget;
+        internal static RenderTarget2D screenReplicationTarget;
+        internal static RenderTarget2D cuttedPositionTarget;
 
         internal static bool shouldUpdate;
 
@@ -40,34 +40,31 @@ namespace MGRBosses
 
         private void Main_DoDraw(On.Terraria.Main.orig_DoDraw orig, Terraria.Main self, GameTime gameTime)
         {
-            if (!initialized)
-            {
-                fakeTex = new Texture2D(device, BladeModeProjectile.BladeModeSize, BladeModeProjectile.BladeModeSize);
-                lineEffect = new BasicEffect(device);
+            if (!initialized) {
+                fakeTex = new Texture2D(Device, BladeModeProjectile.BladeModeSize, BladeModeProjectile.BladeModeSize);
+                lineEffect = new BasicEffect(Device);
                 initialized = true;
-                basicEffect = new BasicEffect(device);
-                screenReplicationTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight);
-                cuttedPositionTarget = new RenderTarget2D(device, 600, 600);
+                basicEffect = new BasicEffect(Device);
+                screenReplicationTarget = new RenderTarget2D(Device, Device.PresentationParameters.BackBufferWidth, Device.PresentationParameters.BackBufferHeight);
+                cuttedPositionTarget = new RenderTarget2D(Device, 600, 600);
             }
-                orig.Invoke(self, gameTime);
+            orig.Invoke(self, gameTime);
 
-            if(hackyTargetNeedsUpdate)
-            {
+            if (hackyTargetNeedsUpdate) {
                 Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.Default, RasterizerState.CullNone, null);
                 hackyTargetNeedsUpdate = false;
-                device.SetRenderTarget(screenReplicationTarget);
-                device.Clear(Color.Transparent);
-                foreach (NPC npc in Main.npc.Where(x => x.active))
-                {
-                        self.DrawNPCDirect(Main.spriteBatch, npc, false, Main.screenPosition);
+                Device.SetRenderTarget(screenReplicationTarget);
+                Device.Clear(Color.Transparent);
+                foreach (NPC npc in Main.npc.Where(x => x.active)) {
+                    self.DrawNPCDirect(Main.spriteBatch, npc, false, Main.screenPosition);
                 }
 
-                device.SetRenderTarget(cuttedPositionTarget);
-                device.Clear(Color.Transparent);
+                Device.SetRenderTarget(cuttedPositionTarget);
+                Device.Clear(Color.Transparent);
 
                 Main.spriteBatch.Draw(screenReplicationTarget, Vector2.Zero, HackerRectangle, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1);
 
-                device.SetRenderTarget(null);
+                Device.SetRenderTarget(null);
                 Main.spriteBatch.End();
             }
 
@@ -95,7 +92,7 @@ namespace MGRBosses
         internal static Vector2 cuttingLineStart;
         internal static Vector2 cuttingLineEnd;
 
-        internal static List<Vector2> points = new List<Vector2>();
+        internal static List<Vector2> points = new();
 
         private void DrawQuads()
         {
@@ -111,22 +108,19 @@ namespace MGRBosses
             if (ks.IsKeyDown(Keys.OemOpenBrackets))
                 drawPolygons = false;
 
-            if((ks.IsKeyDown(Keys.NumPad1) && old.IsKeyUp(Keys.NumPad1)) || shouldUpdate)
-            {
+            if ((ks.IsKeyDown(Keys.NumPad1) && old.IsKeyUp(Keys.NumPad1)) || shouldUpdate) {
                 shouldUpdate = false;
-                List<Quadrilateral> newQuads = new List<Quadrilateral>();
+                List<Quadrilateral> newQuads = new();
                 points.Clear();
-                foreach(Quadrilateral q in Quadrilaterals)
-                {
-                    q.Breakdown(cuttingLineStart,cuttingLineEnd, cuttedPositionTarget).ForEach(x => newQuads.Add(x));
+                foreach (Quadrilateral q in Quadrilaterals) {
+                    q.Breakdown(cuttingLineStart, cuttingLineEnd).ForEach(x => newQuads.Add(x));
                 }
                 Quadrilaterals.Clear();
                 foreach (Quadrilateral nq in newQuads)
                     Quadrilaterals.Add(nq);
             }
 
-            if(ks.IsKeyDown(Keys.NumPad0) && old.IsKeyUp(Keys.NumPad0))
-            {
+            if (ks.IsKeyDown(Keys.NumPad0) && old.IsKeyUp(Keys.NumPad0)) {
                 Main.NewText(currentSelection);
 
                 if (++currentSelection >= Quadrilaterals.Count)
@@ -135,8 +129,7 @@ namespace MGRBosses
 
             int size = BladeModeProjectile.BladeModeSize;
 
-            if (ks.IsKeyDown(Keys.V))
-                {
+            if (ks.IsKeyDown(Keys.V)) {
                 Quadrilaterals.Clear();
                 currentSelection = 0;
                 Quadrilaterals.Add(new Quadrilateral(Main.LocalPlayer.position + new Vector2(0, -150), new Vector2[6]
@@ -150,8 +143,7 @@ namespace MGRBosses
                 }));
             }
 
-            if (Quadrilaterals.Count > 0)
-            {
+            if (Quadrilaterals.Count > 0) {
                 Quadrilateral quad = Quadrilaterals[currentSelection];
                 if (ks.IsKeyDown(Keys.Up))
                     quad.position.Y -= 1.5f;
@@ -163,13 +155,11 @@ namespace MGRBosses
                     quad.position.X += 1.5f;
             }
             VertexBuffer vertexBuffer;
-            
+
             VertexPositionTexture[] texturedVerts = new VertexPositionTexture[Quadrilaterals.Count * 6];
-            for (int i = 0; i < Quadrilaterals.Count; i++)
-            {
+            for (int i = 0; i < Quadrilaterals.Count; i++) {
                 var _verts = Quadrilaterals[i].GetTextureVertices(screenReplicationTarget);
-                for (int j = 0; j < _verts.Length; j++)
-                {
+                for (int j = 0; j < _verts.Length; j++) {
                     texturedVerts[j + i * 6] = _verts[j];
                 }
             }
@@ -177,18 +167,18 @@ namespace MGRBosses
             if (texturedVerts == null || texturedVerts.Length <= 0)
                 return;
 
-            vertexBuffer = new VertexBuffer(device, typeof(VertexPositionTexture), Quadrilaterals.Count*6, BufferUsage.WriteOnly);
+            vertexBuffer = new VertexBuffer(Device, typeof(VertexPositionTexture), Quadrilaterals.Count * 6, BufferUsage.WriteOnly);
             vertexBuffer.SetData(texturedVerts);
 
 
             var screenpos = Main.screenPosition;
             Matrix world = Matrix.CreateTranslation(-new Vector3(screenpos.X, screenpos.Y, 0));
             Matrix view = Main.GameViewMatrix.TransformationMatrix;
-            var viewport = device.Viewport;
+            var viewport = Device.Viewport;
             Matrix projection = Matrix.CreateOrthographicOffCenter(0, viewport.Width, viewport.Height, 0, 0, -1);
 
-            basicEffect.World= world;
-            basicEffect.View=view;
+            basicEffect.World = world;
+            basicEffect.View = view;
             basicEffect.Projection = projection;
             basicEffect.Texture = cuttedPositionTarget;
             basicEffect.TextureEnabled = true;
@@ -198,41 +188,38 @@ namespace MGRBosses
             lineEffect.Projection = projection;
             lineEffect.VertexColorEnabled = true;
 
-            device.SetVertexBuffer(vertexBuffer);
+            Device.SetVertexBuffer(vertexBuffer);
 
-            RasterizerState rasterizerState = new RasterizerState();
-            rasterizerState.CullMode = CullMode.None;
-            device.RasterizerState = rasterizerState;
-            device.SamplerStates[0] = SamplerState.PointClamp;
+            RasterizerState rasterizerState = new() {
+                CullMode = CullMode.None
+            };
+            Device.RasterizerState = rasterizerState;
+            Device.SamplerStates[0] = SamplerState.PointClamp;
 
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
-            {
+            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes) {
                 pass.Apply();
-                device.DrawPrimitives(PrimitiveType.TriangleList, 0, Quadrilaterals.Count * 2);
+                Device.DrawPrimitives(PrimitiveType.TriangleList, 0, Quadrilaterals.Count * 2);
             }
 
             if (!drawPolygons)
                 return;
 
             VertexPositionColor[] coloredVerts = new VertexPositionColor[Quadrilaterals.Count * 6];
-            for (int i = 0; i < Quadrilaterals.Count; i++)
-            {
+            for (int i = 0; i < Quadrilaterals.Count; i++) {
                 var _verts = Quadrilaterals[i].GetColorVertices(Color.Red);
-                for (int j = 0; j < _verts.Length; j++)
-                {
+                for (int j = 0; j < _verts.Length; j++) {
                     coloredVerts[j + i * 6] = _verts[j];
                 }
             }
 
-            vertexBuffer = new VertexBuffer(device, typeof(VertexPositionColor), Quadrilaterals.Count * 6, BufferUsage.WriteOnly);
+            vertexBuffer = new VertexBuffer(Device, typeof(VertexPositionColor), Quadrilaterals.Count * 6, BufferUsage.WriteOnly);
             vertexBuffer.SetData(coloredVerts);
 
-            device.SetVertexBuffer(vertexBuffer);
+            Device.SetVertexBuffer(vertexBuffer);
 
-            foreach (EffectPass pass in lineEffect.CurrentTechnique.Passes)
-            {
+            foreach (EffectPass pass in lineEffect.CurrentTechnique.Passes) {
                 pass.Apply();
-                device.DrawPrimitives(PrimitiveType.LineStrip, 0, Quadrilaterals.Count * 5);
+                Device.DrawPrimitives(PrimitiveType.LineStrip, 0, Quadrilaterals.Count * 5);
             }
 
         }
@@ -246,11 +233,12 @@ namespace MGRBosses
             lineEffect.Dispose();
         }
 
+        /*
         public void UpdateTex(Rectangle rect)
         {
             Color[] data = new Color[BladeModeProjectile.BladeModeSize * BladeModeProjectile.BladeModeSize];
             int offX = rect.X;
-        }
+        }*/
 
         public List<Quadrilateral> Quadrilaterals;
     }

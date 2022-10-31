@@ -21,21 +21,12 @@ namespace MGRBosses
 
         public Vector2 velocity;
 
-        private Vector2[] _vertices;
-
-        private float _initialSize;
-
-        private float _angle;
+        private readonly Vector2[] _vertices;
 
         public Quadrilateral(Vector2 pos, Vector2[] verts)
         {
             position = pos;
             _vertices = verts;
-            float bigY = _vertices[0].Y;
-            for (int i = 0; i < _vertices.Length; i++)
-                if (_vertices[i].Y > bigY)
-                    bigY = _vertices[i].Y;
-            _initialSize = bigY;
         }
 
         public VertexPositionColorTexture[] GetTextureColorVertices(Texture2D sampledTexture)
@@ -45,8 +36,7 @@ namespace MGRBosses
             var texWidth = sampledTexture.Width;
             var texHeight = sampledTexture.Height;
 
-            for (int i = 0; i < _vertices.Length; i++)
-            {
+            for (int i = 0; i < _vertices.Length; i++) {
                 var vertexPosition = position + _vertices[i];
 
                 float normalizedX = (_vertices[i].X + mappingOffset.X) / (float)texWidth;
@@ -69,8 +59,7 @@ namespace MGRBosses
             var texWidth = sampledTexture.Width;
             var texHeight = sampledTexture.Height;
 
-            for (int i = 0; i < _vertices.Length; i++)
-            {
+            for (int i = 0; i < _vertices.Length; i++) {
                 var vertexPosition = position + _vertices[i];
 
                 float normalizedX = (_vertices[i].X) / (float)texWidth;
@@ -90,8 +79,7 @@ namespace MGRBosses
         {
             VertexPositionColor[] vertices = new VertexPositionColor[_vertices.Length];
 
-            for (int i = 0; i < _vertices.Length; i++)
-            {
+            for (int i = 0; i < _vertices.Length; i++) {
                 var vertexPosition = position + _vertices[i];
 
                 var clr = Colors == null || Colors.Length <= 0 ? color : Colors[i / 3];
@@ -102,14 +90,14 @@ namespace MGRBosses
             return vertices;
         }
 
-        public List<Quadrilateral> Breakdown(Vector2 cuttingLineStart, Vector2 cuttingLineEnd, Texture2D tex)
+        public List<Quadrilateral> Breakdown(Vector2 cuttingLineStart, Vector2 cuttingLineEnd)
         {
-            List<Quadrilateral> result = new List<Quadrilateral>();
+            List<Quadrilateral> result = new() {
+                this
+            };
 
-            result.Add(this);
-
-            List<Vector2> intersectionPoints = new List<Vector2>();
-            List<Line> lines = new List<Line>()
+            List<Vector2> intersectionPoints = new();
+            List<Line> lines = new()
             {
                 new Line(position + _vertices[0], position + _vertices[1]),
                 new Line(position + _vertices[5], position + _vertices[4]),
@@ -119,13 +107,11 @@ namespace MGRBosses
 
             bool[] intersectedSides = new bool[lines.Count];
 
-            for(int i = 0; i < lines.Count; i++)
-            {
+            for (int i = 0; i < lines.Count; i++) {
                 var checkedLine = lines[i];
                 Line cuttingLine = GetLine(cuttingLineEnd, cuttingLineStart);
 
-                if(IntersectsV2(cuttingLine, checkedLine, out var hector))
-                {
+                if (IntersectsV2(cuttingLine, checkedLine, out var hector)) {
                     intersectionPoints.Add(hector);
                     BladeModeSystem.points.Add(hector);
                     intersectedSides[i] = true;
@@ -133,16 +119,14 @@ namespace MGRBosses
             }
 
             bool intersectedParallelHorizontal = intersectedSides[2] && intersectedSides[3];
-            bool intersectedParallelVertical = intersectedSides[0] && intersectedSides[1]; 
+            bool intersectedParallelVertical = intersectedSides[0] && intersectedSides[1];
 
             if (intersectionPoints.Count != 2)
                 return result;
 
-            if (intersectedParallelHorizontal || intersectedParallelVertical)
-            {
+            if (intersectedParallelHorizontal || intersectedParallelVertical) {
                 float speed = 0.05f;
-                if (intersectedParallelHorizontal)
-                {
+                if (intersectedParallelHorizontal) {
                     var newQuad = new Quadrilateral(position, new Vector2[]
                     {
                     _vertices[0],
@@ -151,8 +135,7 @@ namespace MGRBosses
                     _vertices[3],
                     intersectionPoints[1]-position,
                     intersectionPoints[0]-position
-                    })
-                    {
+                    }) {
                         Colors = new Color[]
                         {
                             Color.Red, Color.Blue
@@ -169,8 +152,7 @@ namespace MGRBosses
                     intersectionPoints[1]-position,
                     _vertices[4],
                     _vertices[5]
-                    })
-                    {
+                    }) {
                         Colors = new Color[]
                         {
                             Color.Green, Color.Yellow
@@ -184,8 +166,7 @@ namespace MGRBosses
                     result.Add(newQuad2);
                 }
 
-                if (intersectedParallelVertical)
-                {
+                if (intersectedParallelVertical) {
                     var newQuad = new Quadrilateral(position, new Vector2[]
                     {
                     _vertices[0],
@@ -194,8 +175,7 @@ namespace MGRBosses
                     intersectionPoints[0]-position,
                     intersectionPoints[1]-position,
                     _vertices[5]
-                    })
-                    {
+                    }) {
                         Colors = new Color[]
                         {
                             Color.Red, Color.Blue
@@ -212,8 +192,7 @@ namespace MGRBosses
                     _vertices[3],
                     _vertices[4],
                     intersectionPoints[1]-position
-                    })
-                    {
+                    }) {
                         Colors = new Color[]
                         {
                             Color.Green, Color.Yellow
@@ -229,36 +208,6 @@ namespace MGRBosses
             }
 
             return result;
-        }
-
-        public List<Quadrilateral> BreakDown(int pieces, int total, float angle)
-        {
-            List<Quadrilateral> newQuads = new List<Quadrilateral>();
-
-            float bigY = _vertices[0].Y;
-            for(int i = 0; i < _vertices.Length; i++)
-                if(_vertices[i].Y > bigY)
-                    bigY = _vertices[i].Y;
-
-            for (int i = 0; i < pieces; i++)
-            {
-                Vector2[] newVertices = new Vector2[_vertices.Length];
-
-                for (int j = 0; j < newVertices.Length; j++)
-                {
-                    float y = _vertices[j].Y / pieces;
-                    newVertices[j] = new Vector2(_vertices[j].X, y);
-                }
-
-                var newQuad = new Quadrilateral(position+new Vector2(0, bigY / pieces)*i, newVertices);
-                newQuad.mappingOffset = new Vector2(0, (_initialSize / pieces) * i);
-                newQuad._initialSize = _initialSize;
-                newQuad._angle = angle;
-
-                newQuads.Add(newQuad);
-            }
-
-            return newQuads;
         }
     }
 }

@@ -7,13 +7,10 @@ namespace MGRBosses.Content.Projectiles.Monsoon
 {
     public class Shockwave : ModProjectile
     {
-        private int
-               RIPPLE_COUNT = 1,
-               RIPPLE_SIZE = 8;
-
-        private float
-            RIPPLE_SPEED = 3f,
-            DISTORT_STRENGTH = 1000f;
+        private readonly int RIPPLE_COUNT = 1;
+        private readonly int RIPPLE_SIZE = 8;
+        private readonly float RIPPLE_SPEED = 3f;
+        private readonly float DISTORT_STRENGTH = 1000f;
 
         public override string Texture => "MGRBosses/Content/Textures/Monsoon/RedPhosphor";
 
@@ -33,8 +30,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
             if (Main.dedServ)
                 return;
 
-            if (!Filters.Scene["Shockwave"].IsActive())
-            {
+            if (!Filters.Scene["Shockwave"].IsActive()) {
                 Filters.Scene.Activate("Shockwave", Projectile.Center).GetShader().UseColor(RIPPLE_COUNT, RIPPLE_SIZE, RIPPLE_SPEED).UseTargetPosition(Projectile.Center);
             }
 
@@ -42,7 +38,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
 
             Filters.Scene["Shockwave"].GetShader().UseTargetPosition(Projectile.Center);
             Filters.Scene["Shockwave"].GetShader().UseColor(RIPPLE_COUNT, RIPPLE_SIZE, progress * 10);
-            Filters.Scene["Shockwave"].GetShader().UseProgress(progress).UseOpacity(DISTORT_STRENGTH * (1-progress / 3f));
+            Filters.Scene["Shockwave"].GetShader().UseProgress(progress).UseOpacity(DISTORT_STRENGTH * (1 - progress / 3f));
         }
 
         public override void Kill(int timeLeft)
