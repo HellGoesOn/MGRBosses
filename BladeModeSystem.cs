@@ -85,7 +85,7 @@ namespace MGRBosses
 
                 Main.spriteBatch.Draw(screenReplicationTarget, Vector2.Zero, HackerRectangle, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1);
 
-                Device.SetRenderTarget(null);
+                Device.SetRenderTarget(Main.screenTarget);
                 Main.spriteBatch.End();
             }
 
