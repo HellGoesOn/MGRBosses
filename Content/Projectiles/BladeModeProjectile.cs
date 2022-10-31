@@ -1,43 +1,41 @@
 ﻿using MGRBosses.Common;
 using MGRBosses.Core;
+using MGRBosses.Core.BladeMode;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ModLoader;
-using static Terraria.Player;
 
 namespace MGRBosses.Content.Projectiles
 {
-    public class Weakspot
-    {
-        public Entity Owner;
-
-        public Vector2 PositionOffset;
-
-        public Vector2 Size;
-
-        public bool Exposed;
-
-        public Weakspot(Entity owner, Vector2 offset, Vector2 size)
-        {
-            Owner = owner;
-            PositionOffset = offset;
-            Size = size;
-            Exposed = false;
-        }
-    }
-
     public partial class BladeModeProjectile : ModProjectile
     {
         public const int BladeModeSize = 300;
 
+        public float testTimer;
+        public Rectangle worldRect;
+        public List<Weakspot> Weakspots;
+
+        internal float cutProgress;
+
+        internal Vector2 cutStartPos;
+        internal Vector2 cutProgressPos;
+        internal Vector2 cutDestination;
+
+        private int directionFixer;
+        private bool initialized;
+        private bool initializedList;
+        private bool oldControlUseItem;
+        private float cutAngle;
+        private float angleChangeSpeed;
+
+        private Vector2 positionOffset;
+
         public override string Texture => "MGRBosses/Content/Textures/Items/Murasama";
+
+        private Player Owner => Main.player[Projectile.owner];
 
         public override void SetDefaults()
         {
@@ -49,29 +47,6 @@ namespace MGRBosses.Content.Projectiles
             Weakspots = new List<Weakspot>();
             Projectile.timeLeft = 13;
         }
-
-        public List<Weakspot> Weakspots;
-
-        private bool initialized;
-
-        private bool initializedList;
-
-        private Vector2 positionOffset;
-
-        private Player Owner => Main.player[Projectile.owner];
-
-        private bool oldControlUseItem;
-
-        private float cutAngle;
-        private float angleChangeSpeed;
-
-        internal Vector2 cutStartPos;
-        internal Vector2 cutProgressPos;
-        internal Vector2 cutDestination;
-
-        internal float cutProgress;
-
-        private int directionFixer;
 
         public override void PostAI()
         {
@@ -221,10 +196,6 @@ namespace MGRBosses.Content.Projectiles
             return false;
         }
 
-        public Rectangle worldRect;
-
-        public float testTimer;
-
         public override void PostDraw(Color lightColor)
         {
             if (cutProgress > 0) {
@@ -235,6 +206,7 @@ namespace MGRBosses.Content.Projectiles
 
             if (Projectile.timeLeft > 11)
                 return;
+
             MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.05f, Color.LightCyan * 0.5f, Main.spriteBatch);
 
             MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Violet, Main.spriteBatch);

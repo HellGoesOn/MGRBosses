@@ -15,8 +15,7 @@ namespace MGRBosses.Content.NPCs
 
             Color clr = IsMagnetized ? Color.Purple : drawColor;
 
-            switch (state)
-            {
+            switch (state) {
                 case AIState.SmokeAttack:
                     if (monsoonOpacity <= targetOpacity + 0.01f)
                         DrawBody(effects, Color.White * monsoonOpacity);
@@ -28,11 +27,9 @@ namespace MGRBosses.Content.NPCs
                     break;
             }
 
-            if (state != AIState.SmokeAttack)
-            {
+            if (state != AIState.SmokeAttack) {
                 bool pantsActive = pantsId != -1;
-                if (pantsActive)
-                {
+                if (pantsActive) {
                     NPC pants = Main.npc[pantsId];
 
                     if (pantsActive)
@@ -48,8 +45,7 @@ namespace MGRBosses.Content.NPCs
             Main.spriteBatch.End();
             Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
 
-            for (int i = 0; i < monsoonFog.Count; i++)
-            {
+            for (int i = 0; i < monsoonFog.Count; i++) {
                 monsoonFog[i].Draw(spriteBatch, fogDensity);
             }
 
@@ -66,11 +62,12 @@ namespace MGRBosses.Content.NPCs
             if (changedPos != default)
                 drawPos = changedPos;
 
-            if(drawTorso)
+            if (drawTorso) {
                 Main.EntitySpriteDraw(texBody, drawPos - Main.screenPosition, null, clr * monsoonOpacity, overrideRotation != 0f ? overrideRotation : rotation, new Vector2(13, 22), Vector2.One, effects, 1);
-
-            if(drawLegs)
+            }
+            if (drawLegs) {
                 Main.EntitySpriteDraw(texLegs, drawPos - Main.screenPosition, null, clr * monsoonOpacity, overrideRotation != 0f ? overrideRotation : rotation, new Vector2(13, 22), Vector2.One, effects, 1);
+            }
         }
     }
 }

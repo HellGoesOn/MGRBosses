@@ -2,9 +2,6 @@
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria;
 using Terraria.ModLoader;
 
@@ -12,12 +9,11 @@ namespace MGRBosses.Content.NPCs
 {
     public partial class MonsoonBoss : ModNPC
     {
+        public readonly List<MonsoonFog> monsoonFog = new();
+
         private float fogDensity = 0f;
-        private bool jumpedAway;
-
-        public List<MonsoonFog> monsoonFog = new List<MonsoonFog>();
-
         private float targetOpacity = 0.8f;
+        private bool jumpedAway;
 
         private void SmokeAttack()
         {
@@ -26,14 +22,12 @@ namespace MGRBosses.Content.NPCs
             foreach (MonsoonFog fog in monsoonFog)
                 fog.Update();
 
-            if (Attack_AttemptCount <= 0)
-            {
-				NPC.velocity *= 0;
+            if (Attack_AttemptCount <= 0) {
+                NPC.velocity *= 0;
                 ForceRetreat(40);
             }
 
-            if (fogDensity < 0.35f)
-            {
+            if (fogDensity < 0.35f) {
                 monsoonOpacity = 0f;
                 fogDensity += 0.05f;
             }
@@ -42,8 +36,7 @@ namespace MGRBosses.Content.NPCs
             if (Attack_AimTime == val)
                 MGRBosses.TriggerParry(NPC.Center);
 
-            if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.5)
-            {
+            if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.5) {
                 monsoonOpacity = Math.Clamp(monsoonOpacity + 0.5f, 0, targetOpacity);
 
 
@@ -57,33 +50,26 @@ namespace MGRBosses.Content.NPCs
 
                 NPC.Center = PlayerTarget.Center + new Vector2(250 * directionMultiplier, -200 * heightMultiplier);
                 Attack_AimTime--;
-            }
-            else if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25f)
-            {
+            } else if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25f) {
                 monsoonOpacity = 1f;
 
                 if (DistanceFromTarget <= 2400)
                     Attack_AimTime--;
-                SetDamage(0.2f*DifficultyScale);
+                SetDamage(0.2f * DifficultyScale);
                 NPC.velocity = (PlayerTarget.Center - NPC.Center).SafeNormalize(-Vector2.UnitY) * 12f;
 
-            }
-            else if (Attack_AimTime > 0)
-            {
+            } else if (Attack_AimTime > 0) {
                 NPC.damage = 0;
                 if (monsoonOpacity > 0)
                     monsoonOpacity -= 0.075f;
 
                 Attack_AimTime--;
 
-                if (!jumpedAway)
-                {
+                if (!jumpedAway) {
                     jumpedAway = true;
                     NPC.velocity = -(PlayerTarget.Center - NPC.Center).SafeNormalize(-Vector2.UnitY) * 4f - new Vector2(0, 8);
                 }
-            }
-            else if (Attack_AttemptCount > 0)
-            {
+            } else if (Attack_AttemptCount > 0) {
                 Attack_Direction = Main.rand.Next((int)AttacksFrom.Right + 1);
                 Attack_AttemptCount--;
                 Attack_AimTime = CURRENT_AIM_TIME_MAX;
@@ -92,8 +78,7 @@ namespace MGRBosses.Content.NPCs
 
         private void SmokePrepare()
         {
-            if (Attack_AimTime >= 90)
-            {
+            if (Attack_AimTime >= 90) {
                 monsoonFog.Clear();
                 NPC.velocity *= 0f;
                 Say(smokeQuotes[Main.rand.Next(smokeQuotes.Length)]);
@@ -101,11 +86,9 @@ namespace MGRBosses.Content.NPCs
             if (Attack_AimTime > 0)
                 Attack_AimTime--;
 
-            if (Attack_AimTime == 80)
-            {
-                for(int i = 0; i < 600; i++)
-                {
-                    MonsoonFog fog = new MonsoonFog();
+            if (Attack_AimTime == 80) {
+                for (int i = 0; i < 600; i++) {
+                    MonsoonFog fog = new();
                     float halfWidth = Main.screenWidth * 0.5f;
                     float halfHeight = Main.screenHeight * 0.5f;
                     fog.position = new Vector2(halfWidth + Main.rand.Next(-(int)(halfWidth * 0.85f), (int)(halfWidth * 0.85f)), halfHeight + Main.rand.Next(-(int)(halfHeight * 0.9f), (int)(halfHeight * 0.85f)));
@@ -121,13 +104,11 @@ namespace MGRBosses.Content.NPCs
             if (Attack_AimTime < 40 && fogDensity < 0.65f)
                 fogDensity += 0.05f;
 
-            if (Attack_AimTime == 50)
-            {
+            if (Attack_AimTime == 50) {
                 NPC.velocity = -(PlayerTarget.Center - NPC.Center).SafeNormalize(-Vector2.UnitY) * 12f - new Vector2(0, 16);
             }
 
-            if (Attack_AimTime <= 0)
-            {
+            if (Attack_AimTime <= 0) {
                 monsoonOpacity = 0f;
                 state = AIState.SmokeAttack;
 

@@ -1,5 +1,4 @@
-﻿using BladeMode.Content.Items;
-using MGRBosses.Content.Buffs;
+﻿using MGRBosses.Content.Buffs;
 using MGRBosses.Content.Players;
 using MGRBosses.Content.Projectiles.Monsoon;
 using Microsoft.Xna.Framework;
@@ -12,7 +11,7 @@ namespace MGRBosses.Content.NPCs
 {
     public partial class MonsoonBoss : ModNPC
     {
-        private string[] taunts = new string[]
+        private readonly string[] taunts = new string[]
         {
             "ARE YOU EVEN AIMING?",
             "RIDICULUOUS",
@@ -25,20 +24,17 @@ namespace MGRBosses.Content.NPCs
             if (!player.HasBuff<ParryBuff>())
                 return;
 
-            if (state == AIState.SmokeAttack && Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && player.direction != NPC.direction)
-            {
+            if (state == AIState.SmokeAttack && Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && player.direction != NPC.direction) {
                 SoundEngine.PlaySound(SoundID.Item37, NPC.position);
                 Projectile.NewProjectile(NPC.GetBossSpawnSource(NPC.target), NPC.Center, Vector2.Zero, ModContent.ProjectileType<Shockwave>(), 0, 0);
                 Attack_AimTime = (float)(CURRENT_AIM_TIME_MAX * 0.25);
             }
 
-            if (state == AIState.AttackChain && Attack_AimTime <= 12 && Attack_AimTime >= 4 && player.direction != NPC.direction)
-            {
+            if (state == AIState.AttackChain && Attack_AimTime <= 12 && Attack_AimTime >= 4 && player.direction != NPC.direction) {
                 DoParry(player);
             }
 
-            if(state == AIState.MagneticSpin)
-            {
+            if (state == AIState.MagneticSpin) {
                 player.velocity.X = -4f * player.direction;
                 BlockDamage();
 
@@ -66,45 +62,37 @@ namespace MGRBosses.Content.NPCs
 
         public override void ModifyHitByItem(Player player, Item item, ref int damage, ref float knockback, ref bool crit)
         {
-            if (NPC.life <= NPC.lifeMax * 0.1f)
-            {
+            if (NPC.life <= NPC.lifeMax * 0.1f) {
                 if (player.HasBuff<ParryBuff>())
                     damage = (int)(NPC.lifeMax * 0.1f);
-                else
-                {
+                else {
                     crit = false;
                     NPC.life++;
                     damage = 0;
 
-                    for (int i = 0; i < Main.combatText.Length; i++)
-                    {
-                        if (!Main.combatText[i].active)
-                        {
+                    for (int i = 0; i < Main.combatText.Length; i++) {
+                        if (!Main.combatText[i].active) {
                             Main.LocalPlayer.GetModPlayer<MGRPlayer>().MissedHitsQueue.Add(i);
                             break;
                         }
                     }
                 }
-			}
-                    IgnoreDamageWhenMagnetized(ref damage, ref crit);
             }
+            IgnoreDamageWhenMagnetized(ref damage, ref crit);
+        }
 
         public override void ModifyHitByProjectile(Projectile projectile, ref int damage, ref float knockback, ref bool crit, ref int hitDirection)
         {
-            if (NPC.life <= NPC.lifeMax * 0.1f)
-            {
+            if (NPC.life <= NPC.lifeMax * 0.1f) {
                 if (Main.player[projectile.owner].HasBuff<ParryBuff>())
                     damage = (int)(NPC.lifeMax * 0.1f);
-                else
-                {
+                else {
                     crit = false;
                     NPC.life++;
                     damage = 0;
 
-                    for (int i = 0; i < Main.combatText.Length; i++)
-                    {
-                        if (!Main.combatText[i].active)
-                        {
+                    for (int i = 0; i < Main.combatText.Length; i++) {
+                        if (!Main.combatText[i].active) {
                             Main.LocalPlayer.GetModPlayer<MGRPlayer>().MissedHitsQueue.Add(i);
                             break;
                         }
@@ -120,8 +108,7 @@ namespace MGRBosses.Content.NPCs
 
         private void IgnoreDamageWhenMagnetized(ref int damage, ref bool crit)
         {
-            if (IsMagnetized)
-            {
+            if (IsMagnetized) {
                 if (Main.rand.NextBool(6))
                     Say(taunts[Main.rand.Next(taunts.Length)]);
 
@@ -129,10 +116,8 @@ namespace MGRBosses.Content.NPCs
                 NPC.life++;
                 damage = 0;
 
-                for (int i = 0; i < Main.combatText.Length; i++)
-                {
-                    if (!Main.combatText[i].active)
-                    {
+                for (int i = 0; i < Main.combatText.Length; i++) {
+                    if (!Main.combatText[i].active) {
                         Main.LocalPlayer.GetModPlayer<MGRPlayer>().MissedHitsQueue.Add(i);
                         break;
                     }
@@ -145,19 +130,16 @@ namespace MGRBosses.Content.NPCs
             if (!Main.player[projectile.owner].HasBuff<ParryBuff>())
                 return;
 
-            if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && projectile.direction != NPC.direction)
-            {
+            if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && projectile.direction != NPC.direction) {
                 SoundEngine.PlaySound(SoundID.Item37, NPC.position);
                 Attack_AimTime = (float)(CURRENT_AIM_TIME_MAX * 0.25);
             }
 
-            if (state == AIState.AttackChain && Attack_AimTime <= 24 && Attack_AimTime >= 14 && projectile.direction != NPC.direction)
-            {
+            if (state == AIState.AttackChain && Attack_AimTime <= 24 && Attack_AimTime >= 14 && projectile.direction != NPC.direction) {
                 DoParry(Main.player[projectile.owner]);
             }
 
-            if(state == AIState.MagneticSpin)
-            {
+            if (state == AIState.MagneticSpin) {
                 BlockDamage();
             }
         }

@@ -1,13 +1,9 @@
-﻿using MGRBosses.Core;
+﻿using MGRBosses.Common.Collision;
+using MGRBosses.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria;
-using static MGRBosses.LineInteresection;
 
 namespace MGRBosses
 {
@@ -16,8 +12,6 @@ namespace MGRBosses
         public Color[] Colors { get; set; }
 
         public Vector2 position;
-
-        private Vector2 mappingOffset;
 
         public Vector2 velocity;
 
@@ -39,10 +33,10 @@ namespace MGRBosses
             for (int i = 0; i < _vertices.Length; i++) {
                 var vertexPosition = position + _vertices[i];
 
-                float normalizedX = (_vertices[i].X + mappingOffset.X) / (float)texWidth;
+                float normalizedX = (_vertices[i].X) / (float)texWidth;
                 normalizedX = Math.Clamp(normalizedX, 0.0f, 1.0f);
 
-                float normalizedY = (_vertices[i].Y + mappingOffset.Y) / (float)texHeight;
+                float normalizedY = (_vertices[i].Y) / (float)texHeight;
                 normalizedY = Math.Clamp(normalizedY, 0.0f, 1.0f);
 
                 var textureMapping = new Vector2(normalizedX, normalizedY);
@@ -109,9 +103,9 @@ namespace MGRBosses
 
             for (int i = 0; i < lines.Count; i++) {
                 var checkedLine = lines[i];
-                Line cuttingLine = GetLine(cuttingLineEnd, cuttingLineStart);
+                Line cuttingLine = new(cuttingLineEnd, cuttingLineStart);
 
-                if (IntersectsV2(cuttingLine, checkedLine, out var hector)) {
+                if (LineCollision.Intersection(cuttingLine, checkedLine, out var hector)) {
                     intersectionPoints.Add(hector);
                     BladeModeSystem.points.Add(hector);
                     intersectedSides[i] = true;

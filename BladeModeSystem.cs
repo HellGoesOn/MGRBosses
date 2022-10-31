@@ -11,7 +11,10 @@ namespace MGRBosses
 {
     public class BladeModeSystem : ModSystem
     {
-        internal static List<Vector2> points = new();
+        public int currentSelection;
+        public bool drawPolygons;
+        public List<Quadrilateral> Quadrilaterals;
+        public KeyboardState old;
 
         internal static bool shouldUpdate;
         internal static bool hackyTargetNeedsUpdate;
@@ -22,17 +25,13 @@ namespace MGRBosses
         internal static Rectangle HackerRectangle;
         internal static RenderTarget2D screenReplicationTarget;
         internal static RenderTarget2D cuttedPositionTarget;
+        internal static List<Vector2> points = new();
         internal static GraphicsDevice Device => Main.graphics.GraphicsDevice;
 
-        public int currentSelection;
-        public bool drawPolygons;
-        public List<Quadrilateral> Quadrilaterals;
-        public KeyboardState old;
+        internal bool initialized;
 
         internal BasicEffect basicEffect;
         internal BasicEffect lineEffect;
-
-        internal bool initialized;
         internal Texture2D fakeTex;
 
         public override void Load()

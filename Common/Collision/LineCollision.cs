@@ -1,43 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria;
 
-namespace MGRBosses
+namespace MGRBosses.Common.Collision
 {
-    public class LineInteresection
+    public class LineCollision
     {
-        public struct Line
-        {
-            public float startX;
-            public float startY;
-
-            public float endX;
-            public float endY;
-
-            public Line(float startX, float startY, float endX, float endY)
-            {
-                this.startX = startX;
-                this.startY = startY;
-                this.endX = endX;
-                this.endY = endY;
-            }
-
-            public Line(Vector2 start, Vector2 end)
-            {
-                startX = start.X;
-                startY = start.Y;
-                endX = end.X;
-                endY = end.Y;
-            }
-        }
-
         public static Line GetLine(Vector2 v1, Vector2 v2) => new(v1.X, v1.Y, v2.X, v2.Y);
 
-        public static bool IntersectsV2(Line a, Line b, out Vector2 intersection)
+        public static bool Intersection(Line a, Line b, out Vector2 intersection)
         {
             intersection = new Vector2();
 

@@ -1,13 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Terraria.ModLoader.Assets;
 using System;
 using Terraria;
 using Terraria.ModLoader;
-using Terraria.GameContent;
-using MGRBosses.Content.Projectiles.Monsoon;
-using Terraria.ID;
-using MGRBosses.Content.Players;
 
 namespace MGRBosses.Content.NPCs
 {
@@ -21,34 +16,11 @@ namespace MGRBosses.Content.NPCs
             Right
         }
 
-        //private int DEFAULT_AIM_TIME_MAX = 60;
-
-        private int CURRENT_AIM_TIME_MAX = 80;
-
-        private bool firstPhase;
-
-        private bool switchedToPhase2;
-
         public AIState state;
+        public float rotation;
 
-        private AttacksFrom attackFrom;
-
-        private readonly string[] smokeQuotes = new string[]
-            {
-                "HAVE A SMOKE!",
-            "I HOPE YOU CHOKE!",
-            "WHO KNOWS WHERE I’LL COME FROM?",
-            "CATCH ME IF YOU CAN"
-            };
-
-        private float speed = 4f;
-
-        private float monsoonOpacity = 1f;
-
-        private float DifficultyScale
-        {
-            get
-            {
+        private static float DifficultyScale {
+            get {
                 if (Main.masterMode)
                     return 5;
                 if (Main.expertMode)
@@ -56,9 +28,57 @@ namespace MGRBosses.Content.NPCs
                 return 1f;
             }
         }
-        //=> DEFAULT_AIM_TIME_MAX / CURRENT_AIM_TIME_MAX;
+
+        private readonly int CURRENT_AIM_TIME_MAX = 80;
+        private readonly string[] smokeQuotes = new string[] {
+                "HAVE A SMOKE!",
+            "I HOPE YOU CHOKE!",
+            "WHO KNOWS WHERE I’LL COME FROM?",
+            "CATCH ME IF YOU CAN"
+            };
+        private readonly AIState[] attacks = new AIState[]
+        {
+                AIState.SmokePrepare,
+                AIState.AttackChain,
+                AIState.AttackChain,
+                AIState.AttackChain,
+                AIState.Idle
+        };
+
+        private int magneticSwitchCounter;
+        private int nextMoveDelayPlusOne = 30;
+        private int currentAttack;
+        private bool instaKill;
+        private bool firstPhase;
+        private bool switchedToPhase2;
+        private float speed = 4f;
+        private float monsoonOpacity = 1f;
 
         public override string Texture => "MGRBosses/Content/Textures/Monsoon/PH";
+
+        private Player PlayerTarget => Main.player[NPC.target];
+
+        private float DistanceFromTarget => Vector2.DistanceSquared(NPC.Center, PlayerTarget.Center);
+        private float Attack_AttemptCount {
+            get => NPC.ai[1];
+            set {
+                NPC.ai[1] = value;
+            }
+        }
+
+        private float Attack_AimTime {
+            get => NPC.ai[2];
+            set {
+                NPC.ai[2] = value;
+            }
+        }
+
+        private float Attack_Direction {
+            get => NPC.ai[3];
+            set {
+                NPC.ai[3] = value;
+            }
+        }
 
         public override void SetStaticDefaults()
         {
@@ -88,8 +108,6 @@ namespace MGRBosses.Content.NPCs
             pantsId = -1;
         }
 
-        public float rotation;
-
         public override void OnKill()
         {
             Main.StopRain();
@@ -110,8 +128,8 @@ namespace MGRBosses.Content.NPCs
             if (pantsId != -1 && (!Main.npc[pantsId].active || Main.npc[pantsId].life <= 0))
                 pantsId = -1;
 
-            if(state != AIState.SmokeAttack && fogDensity > 0)
-                    fogDensity -= 0.025f;
+            if (state != AIState.SmokeAttack && fogDensity > 0)
+                fogDensity -= 0.025f;
 
             #region boring stuff
             NPC.noTileCollide = false;
@@ -119,42 +137,36 @@ namespace MGRBosses.Content.NPCs
             NPC.netUpdate = true;
 
             NPC.velocity.Y += 0.38f;
-            
-            if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active)
-            {
+
+            if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active) {
                 NPC.TargetClosest(true);
             }
 
-            if(!Main.IsItRaining)
+            if (!Main.IsItRaining)
                 Main.StartRain();
 
             NPC.direction = NPC.Center.X > PlayerTarget.Center.X ? -1 : 1;
 
-            if(PlayerTarget.dead)
-            {
+            if (PlayerTarget.dead) {
                 monsoonOpacity = 0f;
                 NPC.Center -= new Vector2(0, 40);
                 NPC.EncourageDespawn(10);
             }
 
 
-            if (NPC.life >= NPC.lifeMax * 0.4 && !firstPhase)
-            {
+            if (NPC.life >= NPC.lifeMax * 0.4 && !firstPhase) {
                 firstPhase = true;
 
-                if (!Main.dedServ)
-                {
+                if (!Main.dedServ) {
                     Music = MusicLoader.GetMusicSlot(Mod, "Content/Music/StainsOfTimeInstrumental");
                 }
 
                 switchedToPhase2 = false;
             }
-            if (NPC.life <= NPC.lifeMax * 0.4 && !switchedToPhase2)
-            {
+            if (NPC.life <= NPC.lifeMax * 0.4 && !switchedToPhase2) {
                 switchedToPhase2 = true;
 
-                if (!Main.dedServ)
-                {
+                if (!Main.dedServ) {
                     Music = MusicLoader.GetMusicSlot(Mod, "Content/Music/StainsOfTime3");
                 }
             }
@@ -163,35 +175,29 @@ namespace MGRBosses.Content.NPCs
             if (IsMagnetized)
                 magnetizedTime--;
 
-            if (NPC.life < (int)(NPC.lifeMax * 0.69f) && magneticSwitchCounter <= 0)
-            {
+            if (NPC.life < (int)(NPC.lifeMax * 0.69f) && magneticSwitchCounter <= 0) {
                 magneticSwitchCounter++;
                 ForceMagneticAttack();
             }
 
-            if (NPC.life < (int)(NPC.lifeMax * 0.55f) && magneticSwitchCounter <= 1)
-            {
+            if (NPC.life < (int)(NPC.lifeMax * 0.55f) && magneticSwitchCounter <= 1) {
                 magneticSwitchCounter++;
                 ForceMagneticAttack();
             }
 
-            if (NPC.life < (int)(NPC.lifeMax * 0.4f) && magneticSwitchCounter <= 2)
-            {
+            if (NPC.life < (int)(NPC.lifeMax * 0.4f) && magneticSwitchCounter <= 2) {
                 magneticSwitchCounter++;
                 ForceMagneticAttack();
             }
 
-            if (NPC.life < (int)(NPC.lifeMax * 0.1f) && magneticSwitchCounter <= 3)
-            {
+            if (NPC.life < (int)(NPC.lifeMax * 0.1f) && magneticSwitchCounter <= 3) {
                 magneticSwitchCounter++;
 
                 state = AIState.TenPercentLeft;
             }
 
-            if (NPC.HasPlayerTarget)
-            {
-                switch (state)
-                {
+            if (NPC.HasPlayerTarget) {
+                switch (state) {
                     case AIState.Spawn:
                         state = AIState.Run;
                         NPC.ai[0] = 69f;
@@ -233,35 +239,6 @@ namespace MGRBosses.Content.NPCs
             }
         }
 
-        private int magneticSwitchCounter;
-
-        private int chekhovRifleId;
-
-        private void ForceMagneticAttack()
-        {
-            prepedThrowAttack = false;
-            ResetAI(60);
-            magnetizedTime = 1800;
-            state = AIState.MagneticWreckageThrowAttack;
-
-        }
-
-        private void Retreat()
-        {
-            if (NPC.ai[0] == nextMoveDelayPlusOne)
-            {
-                NPC.velocity = new Vector2(-8 * NPC.direction, -10);
-                NPC.ai[0]--;
-            }
-            if (NPC.ai[0] > 0)
-                NPC.ai[0]--;
-            else
-			{
-				ResetAI(10);
-                state = AIState.Idle;
-			}
-		}
-
         public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
         {
             return false;
@@ -269,8 +246,7 @@ namespace MGRBosses.Content.NPCs
 
         public override void OnHitPlayer(Player target, int damage, bool crit)
         {
-            if(state == AIState.SmokeAttack)
-            {
+            if (state == AIState.SmokeAttack) {
                 Say("DOES IT HURT?");
             }
         }
@@ -278,7 +254,7 @@ namespace MGRBosses.Content.NPCs
         public override void ModifyHitPlayer(Player target, ref int damage, ref bool crit)
         {
             int defMod = (int)(target.statDefense * 0.5f);
-            if(Main.expertMode) 
+            if (Main.expertMode)
                 defMod = (int)(target.statDefense * 0.75f);
             if (Main.masterMode)
                 defMod = target.statDefense;
@@ -294,7 +270,6 @@ namespace MGRBosses.Content.NPCs
                 state = AIState.Idle;
         }
 
-        private int nextMoveDelayPlusOne = 30;
 
         private void ForceRetreat(int nextAttackDelay)
         {
@@ -312,8 +287,7 @@ namespace MGRBosses.Content.NPCs
             NPC.damage = 0;
             speed = 0.5f;
 
-            if (Math.Abs(PlayerTarget.velocity.X) > 10f || DistanceFromTarget > 400000)
-            {
+            if (Math.Abs(PlayerTarget.velocity.X) > 10f || DistanceFromTarget > 400000) {
                 state = AIState.SmokePrepare;
                 ResetAI(60);
                 Attack_AimTime = 90;
@@ -340,30 +314,18 @@ namespace MGRBosses.Content.NPCs
             NPC.velocity.Y = 8f;
         }
 
-        private int currentAttack;
-
-        private AIState[] attacks = new AIState[]
-        {
-                AIState.SmokePrepare,
-                AIState.AttackChain,
-                AIState.AttackChain,
-                AIState.AttackChain,
-                AIState.Idle
-        };
-
         private void PickNextAttack()
         {
             AIState nextAttack = attacks[currentAttack];
 
-            if (currentAttack++ >= attacks.Length-1)
+            if (currentAttack++ >= attacks.Length - 1)
                 currentAttack = 0;
             if (!IsMagnetized)
                 state = nextAttack;
             else
-                state = (AIState)Main.rand.Next((int)AIState.MagneticSpin, (int)AIState.PantsAttack+1);
+                state = (AIState)Main.rand.Next((int)AIState.MagneticSpin, (int)AIState.PantsAttack + 1);
 
-            switch (state)
-            {
+            switch (state) {
                 case AIState.SmokePrepare:
                     ResetAI(60);
                     Attack_AimTime = 90;
@@ -387,15 +349,33 @@ namespace MGRBosses.Content.NPCs
             }
         }
 
+        private void ForceMagneticAttack()
+        {
+            prepedThrowAttack = false;
+            ResetAI(60);
+            magnetizedTime = 1800;
+            state = AIState.MagneticWreckageThrowAttack;
+
+        }
+
+        private void Retreat()
+        {
+            if (NPC.ai[0] == nextMoveDelayPlusOne) {
+                NPC.velocity = new Vector2(-8 * NPC.direction, -10);
+                NPC.ai[0]--;
+            }
+            if (NPC.ai[0] > 0)
+                NPC.ai[0]--;
+            else {
+                ResetAI(10);
+                state = AIState.Idle;
+            }
+        }
+
         private void Say(string thing)
         {
             int c = CombatText.NewText(new Rectangle((int)(NPC.Hitbox.X + NPC.velocity.X * 4), NPC.Hitbox.Y, 0, 0), Color.Red, 5, true);
             Main.combatText[c].text = thing;
-        }
-
-        private void SetDamage(int damagePercent)
-        {
-            NPC.damage = (int)(PlayerTarget.statLifeMax2 * (damagePercent * 0.01f));
         }
 
         private void SetDamage(float damage)
@@ -403,7 +383,7 @@ namespace MGRBosses.Content.NPCs
             NPC.damage = (int)(PlayerTarget.statLifeMax2 * damage);
         }
 
-       public void ResetAI(float time, float attackAttempts = 0f, float attackAimTime = 0f, float attackDirection = 0f)
+        public void ResetAI(float time, float attackAttempts = 0f, float attackAimTime = 0f, float attackDirection = 0f)
         {
             rotation = 0f;
             NPC.ai[0] = time;
@@ -411,37 +391,5 @@ namespace MGRBosses.Content.NPCs
             NPC.ai[2] = attackAimTime;
             NPC.ai[3] = attackDirection;
         }
-
-        private Player PlayerTarget => Main.player[NPC.target];
-
-        private float DistanceFromTarget => Vector2.DistanceSquared(NPC.Center, PlayerTarget.Center);
-        private float Attack_AttemptCount
-        {
-            get => NPC.ai[1];
-            set
-            {
-                NPC.ai[1] = value;
-            }
-        }
-
-        private float Attack_AimTime
-        {
-            get => NPC.ai[2];
-            set
-            {
-                NPC.ai[2] = value;
-            }
-        }
-
-        private float Attack_Direction
-        {
-            get => NPC.ai[3];
-            set
-            {
-                NPC.ai[3] = value;
-            }
-        }
-
-        private bool instaKill;
     }
 }

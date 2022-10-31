@@ -14,11 +14,6 @@ namespace MGRBosses.Content.NPCs
 {
     public partial class MonsoonBoss : ModNPC
     {
-        /*
-        private bool switchSide;
-        private int currentSide;
-        */
-
         private bool noGrav;
 
         private void AttackChain()

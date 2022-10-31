@@ -1,6 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Terraria;
-using static MGRBosses.LineInteresection;
 
 namespace MGRBosses.Core
 {
