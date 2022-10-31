@@ -228,9 +228,9 @@ namespace MGRBosses.Content.Projectiles
         public override void PostDraw(Color lightColor)
         {
             if (cutProgress > 0) {
-                MGRBosses.Line(cutProgressPos.FloatToInt(), cutDestination.FloatToInt(), 6f, Color.Crimson);
+                MGRBosses.DrawLine(cutProgressPos.FloatToInt(), cutDestination.FloatToInt(), 6f, Color.Crimson);
             } else {
-                MGRBosses.Line(cutStartPos.FloatToInt(), cutDestination.FloatToInt(), 1f, Color.LightCyan);
+                MGRBosses.DrawLine(cutStartPos.FloatToInt(), cutDestination.FloatToInt(), 1f, Color.LightCyan);
             }
 
             if (Projectile.timeLeft > 11)

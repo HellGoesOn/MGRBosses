@@ -26,7 +26,7 @@ namespace MGRBosses
             }
         }
 
-
+        //move away to ParrySystem
         public static void TriggerParry(Vector2 visualEffectPosition)
         {
             foreach (Player plr in Main.player.Where(x => x.active && x.whoAmI != 255)) {
@@ -47,7 +47,8 @@ namespace MGRBosses
             }
         }
 
-        public static void Line(Vector2 a, Vector2 b, float thickness, Color cl, float extraLength = 0f)
+        // move away to separate class
+        public static void DrawLine(Vector2 a, Vector2 b, float thickness, Color cl, float extraLength = 0f)
         {
             Texture2D tex = ModContent.Request<Texture2D>("MGRBosses/Content/Textures/Laser").Value;
             Vector2 tan = (b - a);

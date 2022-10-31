@@ -1,41 +1,62 @@
-﻿using System;
+﻿using MGRBosses.Content.Projectiles;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria.ModLoader;
 using Terraria;
-using Microsoft.Xna.Framework.Graphics;
-using System.IO;
-using Microsoft.Xna.Framework;
-using Terraria.Graphics.Effects;
-using MGRBosses.Core;
-using Microsoft.Xna.Framework.Input;
-using Terraria.GameContent;
-using MGRBosses.Content.Projectiles;
+using Terraria.ModLoader;
 
 namespace MGRBosses
 {
     public class BladeModeSystem : ModSystem
     {
-        internal static GraphicsDevice Device => Terraria.Main.graphics.GraphicsDevice;
+        internal static List<Vector2> points = new();
+
+        internal static bool shouldUpdate;
+        internal static bool hackyTargetNeedsUpdate;
+
+        internal static Vector2 cuttingLineStart;
+        internal static Vector2 cuttingLineEnd;
+
+        internal static Rectangle HackerRectangle;
+        internal static RenderTarget2D screenReplicationTarget;
+        internal static RenderTarget2D cuttedPositionTarget;
+        internal static GraphicsDevice Device => Main.graphics.GraphicsDevice;
+
+        public int currentSelection;
+        public bool drawPolygons;
+        public List<Quadrilateral> Quadrilaterals;
+        public KeyboardState old;
 
         internal BasicEffect basicEffect;
         internal BasicEffect lineEffect;
+
         internal bool initialized;
-        internal static bool hackyTargetNeedsUpdate;
-
-        internal static RenderTarget2D screenReplicationTarget;
-        internal static RenderTarget2D cuttedPositionTarget;
-
-        internal static bool shouldUpdate;
-
-        internal static Rectangle HackerRectangle;
+        internal Texture2D fakeTex;
 
         public override void Load()
         {
             Quadrilaterals = new List<Quadrilateral>();
-            On.Terraria.Main.DoDraw += Main_DoDraw;
+
+            if (!Main.dedServ) {
+                On.Terraria.Main.DoDraw += Main_DoDraw;
+            }
+        }
+
+        public override void Unload()
+        {
+            On.Terraria.Main.DoDraw -= Main_DoDraw;
+            basicEffect.Dispose();
+            lineEffect.Dispose();
+        }
+
+        public override void PostUpdateGores()
+        {
+            if(!Main.dedServ) {
+                foreach (Quadrilateral quad in Quadrilaterals)
+                    quad.position += quad.velocity;
+            }
         }
 
         private void Main_DoDraw(On.Terraria.Main.orig_DoDraw orig, Terraria.Main self, GameTime gameTime)
@@ -48,6 +69,7 @@ namespace MGRBosses
                 screenReplicationTarget = new RenderTarget2D(Device, Device.PresentationParameters.BackBufferWidth, Device.PresentationParameters.BackBufferHeight);
                 cuttedPositionTarget = new RenderTarget2D(Device, 600, 600);
             }
+
             orig.Invoke(self, gameTime);
 
             if (hackyTargetNeedsUpdate) {
@@ -68,37 +90,14 @@ namespace MGRBosses
                 Main.spriteBatch.End();
             }
 
-
-            /*Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.EffectMatrix);
-            foreach(var v in points)
-            {
-                MGRBosses.Line(cuttingLineStart, cuttingLineEnd, 2f, Color.Red);
-                MGRBosses.DrawBorderedRectangle(v - new Vector2(2) - Main.screenPosition, 6, 6, Color.Red * 0.5f, Color.White, Main.spriteBatch);
-            }
-            Main.spriteBatch.End();*/
-
             if (initialized)
                 DrawQuads();
 
             old = Keyboard.GetState();
         }
 
-        public bool drawPolygons;
-
-        public int currentSelection;
-
-        public KeyboardState old;
-
-        internal static Vector2 cuttingLineStart;
-        internal static Vector2 cuttingLineEnd;
-
-        internal static List<Vector2> points = new();
-
         private void DrawQuads()
         {
-            foreach (Quadrilateral quad in Quadrilaterals)
-                quad.position += quad.velocity;
-
             KeyboardState ks = Keyboard.GetState();
 
             Texture2D sword = ModContent.Request<Texture2D>("MGRBosses/Content/Textures/Monsoon/PH").Value;
@@ -130,17 +129,7 @@ namespace MGRBosses
             int size = BladeModeProjectile.BladeModeSize;
 
             if (ks.IsKeyDown(Keys.V)) {
-                Quadrilaterals.Clear();
-                currentSelection = 0;
-                Quadrilaterals.Add(new Quadrilateral(Main.LocalPlayer.position + new Vector2(0, -150), new Vector2[6]
-                {
-                    new Vector2(0, 0),
-                    new Vector2(size, 0),
-                    new Vector2(0, size),
-                    new Vector2(size, 0),
-                    new Vector2(size, size),
-                    new Vector2(0, size),
-                }));
+                CreateBladeModeQuadrilateral(size);
             }
 
             if (Quadrilaterals.Count > 0) {
@@ -154,9 +143,11 @@ namespace MGRBosses
                 if (ks.IsKeyDown(Keys.Right))
                     quad.position.X += 1.5f;
             }
+
             VertexBuffer vertexBuffer;
 
             VertexPositionTexture[] texturedVerts = new VertexPositionTexture[Quadrilaterals.Count * 6];
+
             for (int i = 0; i < Quadrilaterals.Count; i++) {
                 var _verts = Quadrilaterals[i].GetTextureVertices(screenReplicationTarget);
                 for (int j = 0; j < _verts.Length; j++) {
@@ -224,13 +215,19 @@ namespace MGRBosses
 
         }
 
-        internal Texture2D fakeTex;
-
-        public override void Unload()
+        private void CreateBladeModeQuadrilateral(int size)
         {
-            On.Terraria.Main.DoDraw -= Main_DoDraw;
-            basicEffect.Dispose();
-            lineEffect.Dispose();
+            Quadrilaterals.Clear();
+            currentSelection = 0;
+            Quadrilaterals.Add(new Quadrilateral(Main.LocalPlayer.position + new Vector2(0, -150), new Vector2[6]
+            {
+                    new Vector2(0, 0),
+                    new Vector2(size, 0),
+                    new Vector2(0, size),
+                    new Vector2(size, 0),
+                    new Vector2(size, size),
+                    new Vector2(0, size),
+            }));
         }
 
         /*
@@ -240,39 +237,5 @@ namespace MGRBosses
             int offX = rect.X;
         }*/
 
-        public List<Quadrilateral> Quadrilaterals;
     }
 }
-
-
-/*
-/*
-Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
-Main.EntitySpriteDraw(HackyTarget, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1);
-Main.spriteBatch.End();
-
-
-if (BladeModeGore.oldCount != BladeModeGore.ActiveGore.Count)
-{
-    device.SetRenderTarget(HackyTarget);
-    device.Clear(Color.Transparent);
-    Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.Transform);
-    foreach (BladeModeGore gore in BladeModeGore.ActiveGore)
-    {
-        self.DrawNPCDirect(Main.spriteBatch, gore.npcCopy, false, Main.screenPosition);
-    }
-    Main.spriteBatch.End();
-    BladeModeGore.oldCount = BladeModeGore.ActiveGore.Count;
-    device.SetRenderTarget(null);
-}
-
-Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.Transform);
-foreach (BladeModeGore gore in BladeModeGore.ActiveGore)
-{
-    gore.Draw();
-}
-
-BladeModeGore.ActiveGore.RemoveAll(x => x.testTimer >= 64f);
-
-Main.spriteBatch.End();
-*/

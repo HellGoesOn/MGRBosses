@@ -5,18 +5,20 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria;
-using Terraria.DataStructures;
 using Terraria.GameContent;
 using Terraria.ModLoader;
 
 namespace MGRBosses.Content.Projectiles.Monsoon
 {
+    // Looking kinda dogshit ngl
+    // needs rewrite/cleanup?
     public class ChekhovRifle : ModProjectile
     {
         public override string Texture => "MGRBosses/Content/Textures/Monsoon/Pillar";
+
+        private bool preparedForAttack;
+        private bool hasPlayerDodged;
 
         public override void SetStaticDefaults()
         {
@@ -41,10 +43,6 @@ namespace MGRBosses.Content.Projectiles.Monsoon
             Projectile.hide = true;
         }
 
-        private bool preparedForAttack;
-
-        private bool hasPlayerDodged;
-
         public override void AI()
         {
             if (!Main.npc.Any(x => x.active && x.ModNPC is MonsoonBoss && x.whoAmI != Main.maxNPCs)) {
@@ -64,8 +62,9 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                 }
             }
 
-            if (Projectile.ai[1] == 251f && hasPlayerDodged)
+            if (Projectile.ai[1] == 251f && hasPlayerDodged) {
                 player.velocity.Y = -12f;
+            }
 
             if (Projectile.ai[1] == 250) {
                 if (!hasPlayerDodged)
