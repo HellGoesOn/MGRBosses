@@ -16,7 +16,7 @@ namespace MGRBosses.Content.Projectiles
 
         public float testTimer;
         public Rectangle worldRect;
-        public List<Weakspot> Weakspots;
+        public List<Weakspot> Weakspots => BladeModeSystem.Weakspots;
 
         internal float cutProgress;
 
@@ -44,7 +44,6 @@ namespace MGRBosses.Content.Projectiles
             Projectile.penetrate = -1;
             Projectile.tileCollide = false;
             Projectile.damage = 100;
-            Weakspots = new List<Weakspot>();
             Projectile.timeLeft = 13;
         }
 
@@ -119,6 +118,7 @@ namespace MGRBosses.Content.Projectiles
                 var newRect = new Rectangle(x, y, BladeModeSize, BladeModeSize);
                 BladeModeSystem.HackerRectangle = newRect;
                 BladeModeSystem.hackyTargetNeedsUpdate = true;
+                BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));
                 Weakspots.RemoveAll(x => x.Owner == target);
                 return true;//base.CanHitNPC(target);
             }

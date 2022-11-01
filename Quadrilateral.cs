@@ -1,5 +1,6 @@
 ﻿using MGRBosses.Common.Collision;
 using MGRBosses.Core;
+using MGRBosses.Core.BladeMode;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -107,7 +108,6 @@ namespace MGRBosses
 
                 if (LineCollision.Intersection(cuttingLine, checkedLine, out var hector)) {
                     intersectionPoints.Add(hector);
-                    BladeModeSystem.points.Add(hector);
                     intersectedSides[i] = true;
                 }
             }
