@@ -1,9 +1,11 @@
 ﻿using MGRBosses.Common;
+using MGRBosses.Content.Systems.BladeMode;
 using MGRBosses.Core;
-using MGRBosses.Core.BladeMode;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Terraria;
 using Terraria.ModLoader;
@@ -16,7 +18,7 @@ namespace MGRBosses.Content.Projectiles
 
         public float testTimer;
         public Rectangle worldRect;
-        public List<Weakspot> Weakspots => BladeModeSystem.Weakspots;
+        public static List<Weakspot> Weakspots => BladeModeSystem.Weakspots;
 
         internal float cutProgress;
 
@@ -26,12 +28,12 @@ namespace MGRBosses.Content.Projectiles
 
         private int directionFixer;
         private bool initialized;
-        private bool initializedList;
         private bool oldControlUseItem;
         private float cutAngle;
         private float angleChangeSpeed;
+        private Vector2 mousePos;
 
-        private Vector2 positionOffset;
+       // private Vector2 positionOffset;
 
         public override string Texture => "MGRBosses/Content/Textures/Items/Murasama";
 
@@ -49,21 +51,6 @@ namespace MGRBosses.Content.Projectiles
 
         public override void PostAI()
         {
-            if (!initializedList && Projectile.timeLeft == 12) {
-                Weakspots.Clear();
-                initializedList = true;
-                List<NPC> qualifiedToBeDismembered = Main.npc.Where(x => x.active && x.Hitbox.Intersects(Projectile.Hitbox)).ToList();
-
-                foreach (NPC npc in qualifiedToBeDismembered) {
-                    for (int i = 0; i < 3; i++) {
-                        int halfWidth = (int)(npc.width * 0.5);
-                        int halfHeight = (int)(npc.height * 0.5);
-                        Weakspot newWeakspot = new(npc, new Vector2(-20 + 20 * i, 0), new Vector2(20));
-                        Weakspots.Add(newWeakspot);
-                    }
-                }
-            }
-
             foreach (Weakspot spot in Weakspots) {
                 spot.Exposed = false;
                 if (Collision.CheckAABBvLineCollision(spot.Owner.Center + spot.PositionOffset, spot.Size, cutStartPos, cutDestination)) {
@@ -80,15 +67,23 @@ namespace MGRBosses.Content.Projectiles
                 InitializeSword();
                 Projectile.damage = 10;
                 Projectile.ai[0] = 1;
-                positionOffset = Owner.Center - Projectile.Center;
                 initialized = true;
                 cutAngle = MathHelper.Pi;
             }
 
-            positionOffset = (Main.MouseWorld - Owner.Center).SafeNormalize(-Vector2.UnitY) * 160;
+            if (Main.myPlayer == Projectile.owner)
+                mousePos = Main.MouseWorld;
 
 
-            Projectile.Center = Owner.Center + positionOffset + new Vector2(0, Owner.gfxOffY);
+            Projectile.Center = mousePos; // Owner.Center + positionOffset + new Vector2(0, Owner.gfxOffY);
+
+            var distance = Vector2.Distance(Projectile.Center, Owner.Center);
+            if (distance > 400) {
+                var newPos = Projectile.Center - Owner.Center;
+                newPos *= 400 / distance;
+                Projectile.Center = Owner.Center + newPos;
+            }
+
             Owner.direction = Projectile.Center.X < Owner.Center.X ? -1 : 1;
 
 
@@ -119,7 +114,9 @@ namespace MGRBosses.Content.Projectiles
                 BladeModeSystem.HackerRectangle = newRect;
                 BladeModeSystem.hackyTargetNeedsUpdate = true;
                 BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));
-                Weakspots.RemoveAll(x => x.Owner == target);
+                foreach (var weakspot in targetWeakspot) {
+                    Weakspot.Remove(weakspot);
+                }
                 return true;//base.CanHitNPC(target);
             }
 
@@ -132,7 +129,7 @@ namespace MGRBosses.Content.Projectiles
             testTimer += 0.06f;
 
             if (Main.myPlayer == Projectile.owner) {
-                if (InputSystem.BladeMode.JustPressed && initializedList)
+                if (InputSystem.BladeMode.JustPressed && Projectile.timeLeft < 13)
                     Projectile.Kill();
 
                 if (Owner.controlUseItem && !oldControlUseItem && cutProgress <= 0) {
@@ -172,7 +169,6 @@ namespace MGRBosses.Content.Projectiles
                 }
                 if (Owner.controlUseTile) {
                     Projectile.timeLeft = 14;
-                    initializedList = false;
                 }
             }
             if (cutProgress > 0) {
@@ -207,18 +203,30 @@ namespace MGRBosses.Content.Projectiles
             if (Projectile.timeLeft > 11)
                 return;
 
-            MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.05f, Color.LightCyan * 0.5f, Main.spriteBatch);
+            MGRBosses.DrawBorderedRectangle(Projectile.position - Main.screenPosition, Projectile.width, Projectile.height, Color.Cyan * 0.05f, Color.LightCyan * 0.5f);
 
-            MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Violet, Main.spriteBatch);
-            MGRBosses.DrawBorderedRectangle(cutDestination.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange, Main.spriteBatch);
+            MGRBosses.DrawBorderedRectangle(cutStartPos.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Violet);
+            MGRBosses.DrawBorderedRectangle(cutDestination.FloatToInt() - new Vector2(4) - Main.screenPosition, 8, 8, Color.Cyan, Color.Orange);
 
             foreach (Weakspot weakspot in Weakspots) {
                 Color weakSpotColor = weakspot.Exposed ? Color.Lime * 0.5f : Color.Red * 0.2f;
-                MGRBosses.DrawBorderedRectangle(weakspot.Owner.Center + weakspot.PositionOffset - Main.screenPosition, (int)weakspot.Size.X, (int)weakspot.Size.Y, weakSpotColor, Color.White, Main.spriteBatch);
+                MGRBosses.DrawBorderedRectangle(weakspot.Owner.Center + weakspot.PositionOffset - Main.screenPosition, (int)weakspot.Size.X, (int)weakspot.Size.Y, weakSpotColor, Color.White);
             }
 
             GetSwordAngle();
             DrawSword();
+        }
+
+        public override void SendExtraAI(BinaryWriter writer)
+        {
+            writer.Write(mousePos.X);
+            writer.Write(mousePos.Y);
+        }
+
+        public override void ReceiveExtraAI(BinaryReader reader)
+        {
+            mousePos.X = reader.ReadSingle();
+            mousePos.Y = reader.ReadSingle();
         }
     }
 }

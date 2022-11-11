@@ -1,4 +1,5 @@
 ﻿using BladeMode.Content.Items;
+using MGRBosses.Content.Systems.Arenas;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -99,6 +100,8 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                         int dropItemType = ModContent.ItemType<EMGrenade>();
                         int newItem = Item.NewItem(Projectile.GetSource_DropAsItem(), Projectile.Hitbox, dropItemType);
                         Main.item[newItem].noGrabDelay = 0;
+
+                        BossArenaSystem.GetArenaByAlias("MonsoonArena").Participants.Add(Main.item[newItem]);
 
                         if (Main.netMode == NetmodeID.MultiplayerClient && newItem >= 0) {
                             NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);

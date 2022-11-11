@@ -1,10 +1,10 @@
 ﻿using MGRBosses.Common.Collision;
 using MGRBosses.Core;
-using MGRBosses.Core.BladeMode;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MGRBosses
 {
@@ -118,6 +118,86 @@ namespace MGRBosses
             if (intersectionPoints.Count != 2)
                 return result;
 
+            HandleParallelLineCuts(result, intersectionPoints, intersectedParallelHorizontal, intersectedParallelVertical);
+            //HandlePerpendicularCuts(result, intersectionPoints, intersectedSides);
+
+            return result;
+        }
+
+        
+        private void HandlePerpendicularCuts(List<Quadrilateral> result, List<Vector2> intersectionPoints, bool[] intersectedSides)
+        {
+            bool intersectedTopAndLeft = intersectedSides[0] && intersectedSides[2];
+            bool intersectedTopAndRight = intersectedSides[0] && intersectedSides[3];
+            bool intersectedBottoAndLeft = intersectedSides[1] && intersectedSides[2];
+            bool intersectedBottoAndRight = intersectedSides[1] && intersectedSides[3];
+
+            if(intersectedSides.Any(x => x)) {
+
+                if(intersectedTopAndLeft) {
+                    float speed = 0.05f;
+
+                    var newQuad = new Quadrilateral(position, new Vector2[]
+                    {
+                    _vertices[0],
+                    intersectionPoints[1]-position,
+                    intersectionPoints[0]-position,
+                    _vertices[0],
+                    intersectionPoints[1]-position,
+                    intersectionPoints[0]-position
+                    }) {
+                        Colors = new Color[]
+                        {
+                            Color.Red, Color.Blue
+                        }
+                    };
+
+                    newQuad.velocity += new Vector2(0, -speed);
+
+                    var newQuad2 = new Quadrilateral(position, new Vector2[]
+                    {
+                    intersectionPoints[0]-position,
+                    _vertices[1],
+                    intersectionPoints[1]-position,
+                    _vertices[1],
+                    new Vector2(_vertices[4].X, _vertices[4].Y / 2),
+                    intersectionPoints[1]-position
+                    }) {
+                        Colors = new Color[]
+                        {
+                            Color.Green, Color.Yellow
+                        }
+                    };
+
+                    newQuad2.velocity += new Vector2(0, speed);
+
+                    var newQuad3 = new Quadrilateral(position, new Vector2[]
+                    {
+                    intersectionPoints[1]-position,
+                    new Vector2(_vertices[1].X, _vertices[1].Y + _vertices[5].Y / 2),
+                    _vertices[2],
+                    new Vector2(_vertices[1].X, _vertices[1].Y + _vertices[5].Y / 2),
+                    _vertices[4],
+                    _vertices[5]
+                    }) {
+                        Colors = new Color[]
+                        {
+                            Color.Green, Color.Yellow
+                        }
+                    };
+
+                    newQuad3.velocity += new Vector2(0, speed);
+
+                    result.Clear();
+                    result.Add(newQuad);
+                    result.Add(newQuad2);
+                    result.Add(newQuad3);
+                }
+            }
+        }
+
+        private void HandleParallelLineCuts(List<Quadrilateral> result, List<Vector2> intersectionPoints, bool intersectedParallelHorizontal, bool intersectedParallelVertical)
+        {
             if (intersectedParallelHorizontal || intersectedParallelVertical) {
                 float speed = 0.05f;
                 if (intersectedParallelHorizontal) {
@@ -200,8 +280,6 @@ namespace MGRBosses
                     result.Add(newQuad2);
                 }
             }
-
-            return result;
         }
     }
 }

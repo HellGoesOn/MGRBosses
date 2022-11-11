@@ -1,5 +1,6 @@
 ﻿using MGRBosses.Content.NPCs;
 using MGRBosses.Content.Players;
+using MGRBosses.Content.Systems.Arenas;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -19,6 +20,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
 
         private bool preparedForAttack;
         private bool hasPlayerDodged;
+        private bool triedToBlendIn;
 
         public override void SetStaticDefaults()
         {
@@ -43,6 +45,18 @@ namespace MGRBosses.Content.Projectiles.Monsoon
             Projectile.hide = true;
         }
 
+        public override bool PreAI()
+        {
+            if (!triedToBlendIn) {
+                triedToBlendIn = true;
+                BossArena arena = BossArenaSystem.GetArenaByAlias("MonsoonArena");
+                if (arena != null) {
+                    arena.Participants.Add(Projectile);
+                }
+            }
+            return base.PreAI();
+        }
+
         public override void AI()
         {
             if (!Main.npc.Any(x => x.active && x.ModNPC is MonsoonBoss && x.whoAmI != Main.maxNPCs)) {
@@ -50,6 +64,12 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                 return;
             }
 
+            BossArena arena = BossArenaSystem.GetArenaByAlias("MonsoonArena");
+            if (arena != null) {
+                if (Projectile.Bottom.Y + Projectile.velocity.Y >= arena.position.Y + arena.size.Y) {
+                    Projectile.velocity *= 0.0f;
+                }
+            }
             NPC monsoon = Main.npc[(int)Projectile.knockBack];
             Player player = Main.LocalPlayer;
 

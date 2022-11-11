@@ -1,4 +1,5 @@
 using MGRBosses.Content.NPCs;
+using MGRBosses.Content.Systems.Arenas;
 using System.Linq;
 using Terraria;
 using Terraria.Audio;
@@ -31,7 +32,7 @@ namespace BladeMode.Content.Items
 
         public override void ModifyWeaponCrit(Player player, ref float crit)
         {
-			if (Main.npc.Count(x => x.ModNPC is MonsoonBoss) > 0)
+			if (Main.npc.Any(x => x.ModNPC is MonsoonBoss))
 				crit = 100;
         }
 
@@ -63,6 +64,7 @@ namespace BladeMode.Content.Items
 				{
 					NetMessage.SendData(MessageID.SpawnBoss, number: player.whoAmI, number2: type);
 				}
+
 			}
 
 			return true;

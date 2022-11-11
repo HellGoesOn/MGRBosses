@@ -1,5 +1,6 @@
 ﻿using MGRBosses.Content.Players;
 using MGRBosses.Content.Projectiles.Monsoon;
+using MGRBosses.Content.Systems.Arenas;
 using Microsoft.Xna.Framework;
 using System;
 using Terraria;
@@ -111,6 +112,8 @@ namespace MGRBosses.Content.NPCs
             if (Attack_AimTime == 240) {
                 if (Main.netMode != NetmodeID.MultiplayerClient)
                     pantsId = NPC.NewNPC(NPC.GetBossSpawnSource(NPC.target), (int)NPC.Center.X, (int)NPC.Center.Y, ModContent.NPCType<MonsoonPants>(), 0, 40, 4, 0, 0, NPC.target);
+
+                ModContent.GetInstance<BossArenaSystem>().Arenas[arenaId].Participants.Add(Main.npc[pantsId]);
             }
 
             if (pantsId == -1 && Attack_AimTime <= 239)

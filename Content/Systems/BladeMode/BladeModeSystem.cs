@@ -7,14 +7,14 @@ using System.Linq;
 using Terraria;
 using Terraria.ModLoader;
 
-namespace MGRBosses.Core.BladeMode
+namespace MGRBosses.Content.Systems.BladeMode
 {
     public class BladeModeSystem : ModSystem
     {
         public readonly static List<Weakspot> Weakspots = new();
+        public readonly static List<BladeModeGore> Gores = new();
 
         public int currentSelection;
-        public readonly static List<BladeModeGore> Gores = new();
         public KeyboardState old;
 
         internal static bool shouldUpdate;
@@ -35,7 +35,7 @@ namespace MGRBosses.Core.BladeMode
         internal bool initialized;
         internal Texture2D fakeTex;
 
-        private List<BladeModeGore> _cachedGore = new();
+        private readonly List<BladeModeGore> _cachedGore = new();
 
         public override void Load()
         {
@@ -49,9 +49,13 @@ namespace MGRBosses.Core.BladeMode
         {
             On.Terraria.Main.DoDraw -= Main_DoDraw;
             Main.OnResolutionChanged -= Main_OnResolutionChanged;
-            BasicEffect.Dispose();
-            LineBasicEffect.Dispose();
-            fakeTex.Dispose();
+            Main.QueueMainThreadAction(() =>
+            {
+
+                BasicEffect.Dispose();
+                LineBasicEffect.Dispose();
+                fakeTex.Dispose();
+            });
         }
 
         public override void PostUpdateGores()

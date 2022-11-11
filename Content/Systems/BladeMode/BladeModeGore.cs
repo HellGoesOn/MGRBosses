@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Terraria;
 
-namespace MGRBosses.Core.BladeMode
+namespace MGRBosses.Content.Systems.BladeMode
 {
     public class BladeModeGore
     {

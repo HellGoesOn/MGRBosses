@@ -61,8 +61,9 @@ namespace MGRBosses
             Main.EntitySpriteDraw(tex, a - Main.screenPosition, null, cl, rot, middleOrigin, scale, sprfx, 0);
         }
 
-        public static void DrawBorderedRectangle(Vector2 position, int width, int height, Color color, Color borderColor, SpriteBatch spriteBatch)
+        public static void DrawBorderedRectangle(Vector2 position, int width, int height, Color color, Color borderColor)
         {
+            var spriteBatch = Main.spriteBatch;
             spriteBatch.Draw
                  (
                      TextureAssets.MagicPixel.Value,

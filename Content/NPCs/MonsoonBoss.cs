@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using MGRBosses.Content.Systems.Arenas;
+using MGRBosses.Content.Systems.BladeMode;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using Terraria;
@@ -46,10 +48,12 @@ namespace MGRBosses.Content.NPCs
         };
 
         private int magneticSwitchCounter;
+        private int arenaId;
         private int nextMoveDelayPlusOne = 30;
         private int currentAttack;
         private bool instaKill;
         private bool firstPhase;
+        private bool initializedArena;
         private bool switchedToPhase2;
         private float speed = 4f;
         private float monsoonOpacity = 1f;
@@ -121,6 +125,18 @@ namespace MGRBosses.Content.NPCs
             return base.DrawHealthBar(hbPosition, ref scale, ref position);
         }
 
+        public override bool PreAI()
+        {
+            if(!initializedArena && NPC.HasPlayerTarget) {
+                initializedArena = true;
+
+                var targetData = NPC.GetTargetData();
+                arenaId = BossArenaSystem.CreateArena(new(targetData.Position + targetData.Size - new Vector2(900, 1600), new Vector2(1800, 800), NPC, Main.player[NPC.target]) { Alias = "MonsoonArena"});
+            }
+
+            return base.PreAI();
+        }
+
         public override void AI()
         {
             base.AI();
@@ -172,9 +188,17 @@ namespace MGRBosses.Content.NPCs
             }
             #endregion
 
-            if (IsMagnetized)
-                magnetizedTime--;
+            if (IsMagnetized) {
 
+                if (!Weakspot.ExistsFor(NPC)) {
+                    var spot = Weakspot.Create(NPC, new(-8, -16), new(16));
+                    spot.OnWeakspotCut += delegate (Entity owner)
+                    {
+                        magnetizedTime = 0;
+                    };
+                }
+                magnetizedTime--;
+            }
             if (NPC.life < (int)(NPC.lifeMax * 0.69f) && magneticSwitchCounter <= 0) {
                 magneticSwitchCounter++;
                 ForceMagneticAttack();
