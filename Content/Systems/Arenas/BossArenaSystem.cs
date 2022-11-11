@@ -69,5 +69,10 @@ namespace MGRBosses.Content.Systems.Arenas
             arenas.Add(arena);
             return arenas.Count - 1;
         }
+
+        public static BossArena GetArenaForMe(Entity me)
+        {
+            return ModContent.GetInstance<BossArenaSystem>().Arenas.FirstOrDefault(x => x.Participants.Contains(me));
+        }
     }
 }

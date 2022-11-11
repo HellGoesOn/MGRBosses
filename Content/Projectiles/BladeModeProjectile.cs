@@ -111,9 +111,10 @@ namespace MGRBosses.Content.Projectiles
                 int y = (int)(target.Center.Y - BladeModeSize / 2 - Main.screenPosition.Y);
                 var rect = worldRect;
                 var newRect = new Rectangle(x, y, BladeModeSize, BladeModeSize);
+                /*
                 BladeModeSystem.HackerRectangle = newRect;
                 BladeModeSystem.hackyTargetNeedsUpdate = true;
-                BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));
+                BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));*/
                 foreach (var weakspot in targetWeakspot) {
                     Weakspot.Remove(weakspot);
                 }

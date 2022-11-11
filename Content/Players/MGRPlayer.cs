@@ -1,6 +1,7 @@
 ﻿using MGRBosses.Common;
 using MGRBosses.Content.Buffs;
 using MGRBosses.Content.Projectiles;
+using MGRBosses.Content.Systems.Arenas;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -101,10 +102,18 @@ namespace MGRBosses.Content.Players
             ResetCameraOverride();
         }
 
+        public override void PreUpdateMovement()
+        {
+            // use pattern matching for cheating && writing less code?
+            if (BossArenaSystem.GetArenaForMe(Player) is BossArena arena) {
+                if (Player.Bottom.Y >= arena.position.Y + arena.size.Y && Player.velocity.Y > 0)
+                    Player.velocity.Y *= 0;
+            }
+        }
+
         public override void ResetEffects()
         {
-
-            if(CameraOverride.Source != null && !CameraOverride.Source.active)
+            if (CameraOverride.Source != null && !CameraOverride.Source.active)
             {
                 ResetCameraOverride();
             }

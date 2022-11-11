@@ -51,7 +51,6 @@ namespace MGRBosses.Content.Systems.BladeMode
             Main.OnResolutionChanged -= Main_OnResolutionChanged;
             Main.QueueMainThreadAction(() =>
             {
-
                 BasicEffect.Dispose();
                 LineBasicEffect.Dispose();
                 fakeTex.Dispose();
