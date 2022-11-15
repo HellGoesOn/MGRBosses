@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Terraria;
 
 namespace MGRBosses
 {
@@ -118,7 +119,7 @@ namespace MGRBosses
             if (intersectionPoints.Count != 2)
                 return result;
 
-            HandleParallelLineCuts(result, intersectionPoints, intersectedParallelHorizontal, intersectedParallelVertical);
+            HandleParallelLineCuts(result, intersectionPoints, intersectedParallelHorizontal, intersectedParallelVertical, cuttingLineStart, cuttingLineEnd);
             //HandlePerpendicularCuts(result, intersectionPoints, intersectedSides);
 
             return result;
@@ -196,10 +197,18 @@ namespace MGRBosses
             }
         }
 
-        private void HandleParallelLineCuts(List<Quadrilateral> result, List<Vector2> intersectionPoints, bool intersectedParallelHorizontal, bool intersectedParallelVertical)
+        private void HandleParallelLineCuts(List<Quadrilateral> result, List<Vector2> intersectionPoints, bool intersectedParallelHorizontal, bool intersectedParallelVertical, Vector2 cutStart, Vector2 cutEnd)
         {
+            var vel = (cutEnd - cutStart).SafeNormalize(-Vector2.UnitY);
+
             if (intersectedParallelHorizontal || intersectedParallelVertical) {
                 float speed = 0.05f;
+
+                for(int i = 0; i < 20; i++) {
+                    var startPos = Vector2.Lerp(cutStart, cutEnd, (float)(i / 20.0f));
+                    FallOffEffect.Add(startPos - vel * 80, (startPos + (vel * Main.rand.Next(40, 100)).RotatedByRandom(0.35f)));
+                }
+
                 if (intersectedParallelHorizontal) {
                     var newQuad = new Quadrilateral(position, new Vector2[]
                     {
@@ -216,7 +225,7 @@ namespace MGRBosses
                         }
                     };
 
-                    newQuad.velocity += new Vector2(0, -speed);
+                    newQuad.velocity += vel * speed;
 
                     var newQuad2 = new Quadrilateral(position, new Vector2[]
                     {
@@ -233,7 +242,7 @@ namespace MGRBosses
                         }
                     };
 
-                    newQuad2.velocity += new Vector2(0, speed);
+                    newQuad2.velocity += vel * -speed;
 
                     result.Clear();
                     result.Add(newQuad);
@@ -256,7 +265,7 @@ namespace MGRBosses
                         }
                     };
 
-                    newQuad.velocity += new Vector2(-speed, 0);
+                    newQuad.velocity += vel * -speed;
 
                     var newQuad2 = new Quadrilateral(position, new Vector2[]
                     {
@@ -273,7 +282,7 @@ namespace MGRBosses
                         }
                     };
 
-                    newQuad2.velocity += new Vector2(speed, 0);
+                    newQuad2.velocity += vel * speed;
 
                     result.Clear();
                     result.Add(newQuad);

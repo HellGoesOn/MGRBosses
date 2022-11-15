@@ -2,6 +2,8 @@
 using MGRBosses.Content.Buffs;
 using MGRBosses.Content.Projectiles;
 using MGRBosses.Content.Systems.Arenas;
+using MGRBosses.Content.Systems.Cinematic;
+using MGRBosses.Core;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -26,6 +28,12 @@ namespace MGRBosses.Content.Players
 
         public override void ProcessTriggers(TriggersSet triggersSet)
         {
+            if (CinematicScene.IsActor(Player, out var res)) {
+
+                if (res.SequenceBlocksInput) {
+                    Player.BlockInputs();
+                }
+            }
             if(InputSystem.BladeMode.JustPressed && !HasActiveBladeMode)
             {
                 Projectile.NewProjectile(Player.GetSource_Misc("BladeMode"),

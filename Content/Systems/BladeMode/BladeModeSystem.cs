@@ -40,14 +40,37 @@ namespace MGRBosses.Content.Systems.BladeMode
         public override void Load()
         {
             if (!Main.dedServ) {
+                Main.QueueMainThreadAction(() =>
+                {
+                    initialized = true;
+                    fakeTex = new Texture2D(Device, BladeModeProjectile.BladeModeSize, BladeModeProjectile.BladeModeSize);
+                    LineBasicEffect = new BasicEffect(Device);
+                    BasicEffect = new BasicEffect(Device);
+                    screenReplicationTarget = new RenderTarget2D(Device, Device.PresentationParameters.BackBufferWidth, Device.PresentationParameters.BackBufferHeight);
+                    cuttedPositionTarget = new RenderTarget2D(Device, 600, 600);
+                });
                 On.Terraria.Main.DoDraw += Main_DoDraw;
+                On.Terraria.Main.Update += Main_Update;
                 Main.OnResolutionChanged += Main_OnResolutionChanged;
+            }
+        }
+
+        private void Main_Update(On.Terraria.Main.orig_Update orig, Main self, GameTime gameTime)
+        {
+            orig(self, gameTime);
+            if (shouldUpdate) {
+                shouldUpdate = false;
+
+                foreach (BladeModeGore q in Gores) {
+                    q.DoCut(cuttingLineStart, cuttingLineEnd);
+                }
             }
         }
 
         public override void Unload()
         {
             On.Terraria.Main.DoDraw -= Main_DoDraw;
+            On.Terraria.Main.Update -= Main_Update;
             Main.OnResolutionChanged -= Main_OnResolutionChanged;
             Main.QueueMainThreadAction(() =>
             {
@@ -74,15 +97,6 @@ namespace MGRBosses.Content.Systems.BladeMode
 
         private void Main_DoDraw(On.Terraria.Main.orig_DoDraw orig, Terraria.Main self, GameTime gameTime)
         {
-            if (!initialized) {
-                initialized = true;
-                fakeTex = new Texture2D(Device, BladeModeProjectile.BladeModeSize, BladeModeProjectile.BladeModeSize);
-                LineBasicEffect = new BasicEffect(Device);
-                BasicEffect = new BasicEffect(Device);
-                screenReplicationTarget = new RenderTarget2D(Device, Device.PresentationParameters.BackBufferWidth, Device.PresentationParameters.BackBufferHeight);
-                cuttedPositionTarget = new RenderTarget2D(Device, 600, 600);
-            }
-
             orig.Invoke(self, gameTime);
 
             if (hackyTargetNeedsUpdate) {
@@ -126,14 +140,6 @@ namespace MGRBosses.Content.Systems.BladeMode
                 drawPolygons = true;
             if (ks.IsKeyDown(Keys.OemOpenBrackets))
                 drawPolygons = false;
-
-            if ((ks.IsKeyDown(Keys.NumPad1) && old.IsKeyUp(Keys.NumPad1)) || shouldUpdate) {
-                shouldUpdate = false;
-
-                foreach (BladeModeGore q in Gores) {
-                    q.DoCut(cuttingLineStart, cuttingLineEnd);
-                }
-            }
 
             if (ks.IsKeyDown(Keys.NumPad0) && old.IsKeyUp(Keys.NumPad0)) {
                 Main.NewText(currentSelection);

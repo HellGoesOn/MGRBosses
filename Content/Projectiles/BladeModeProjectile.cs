@@ -107,14 +107,19 @@ namespace MGRBosses.Content.Projectiles
             bool counter = targetWeakspot.All(x => x.Exposed) && targetWeakspot.Count > 0;
 
             if (counter) {
+
                 int x = (int)(target.Center.X - BladeModeSize / 2 - Main.screenPosition.X);
                 int y = (int)(target.Center.Y - BladeModeSize / 2 - Main.screenPosition.Y);
                 var rect = worldRect;
                 var newRect = new Rectangle(x, y, BladeModeSize, BladeModeSize);
-                /*
-                BladeModeSystem.HackerRectangle = newRect;
-                BladeModeSystem.hackyTargetNeedsUpdate = true;
-                BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));*/
+                
+                if (target.life <= (int)(target.lifeMax * 0.1f)) {
+                    BladeModeSystem.HackerRectangle = newRect;
+                    BladeModeSystem.hackyTargetNeedsUpdate = true;
+                    BladeModeSystem.CacheGore(new(BladeModeSystem.cuttedPositionTarget, Projectile.position, BladeModeSize));
+                    target.life = 0;
+                }
+
                 foreach (var weakspot in targetWeakspot) {
                     Weakspot.Remove(weakspot);
                 }

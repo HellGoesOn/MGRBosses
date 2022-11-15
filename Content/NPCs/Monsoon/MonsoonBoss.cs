@@ -1,8 +1,10 @@
 ﻿using MGRBosses.Content.Systems.Arenas;
 using MGRBosses.Content.Systems.BladeMode;
+using MGRBosses.Content.Systems.Cinematic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 using Terraria;
 using Terraria.ModLoader;
 
@@ -132,6 +134,57 @@ namespace MGRBosses.Content.NPCs
 
                 var targetData = NPC.GetTargetData();
                 arenaId = BossArenaSystem.CreateArena(new(targetData.Position + targetData.Size - new Vector2(900, 1600), new Vector2(1800, 800), NPC, Main.player[NPC.target]) { Alias = "MonsoonArena"});
+                var cutscene = CinematicSystem.AddCinematicScene();
+                cutscene.Actors.Add(NPC);
+                foreach(Player plr in Main.player.Where(x => x.whoAmI != 255)) {
+                    cutscene.Actors.Add(plr);
+                }
+
+                var arena = BossArenaSystem.GetArenaByAlias("MonsoonArena");
+                cutscene.screenPosition = arena.Center + new Vector2(0, 240);
+                cutscene.AddSequence(60, () => {
+                    NPC.position = arena.position + NPC.Size;
+                    NPC.velocity *= 0;
+                });
+                cutscene.AddSequence(1, () =>
+                {
+                    Main.NewText("How pleased are you to chop away, Jack the Woodchipper?");
+                });
+                cutscene.AddSequence(180, () =>
+                {
+                    NPC.position = arena.position + NPC.Size;
+                    NPC.velocity *= 0;
+                });
+                cutscene.AddSequence(60, () =>
+                {
+                    cutscene.Actors.Where(x => x is Player).ToList().ForEach(x => x.direction = -1);
+                    cutscene.screenPosition += (arena.Center + new Vector2(-180, 60) - cutscene.screenPosition) * 0.05f;
+                });
+                cutscene.AddSequence(60, () =>
+                {
+                    cutscene.Actors.Where(x => x is Player).ToList().ForEach(x => x.direction = 1);
+                    cutscene.screenPosition += (arena.Center + new Vector2(180, 60) - cutscene.screenPosition) * 0.05f;
+                });
+                cutscene.AddSequence(180, () =>
+                {
+                    cutscene.Actors.Where(x => x is Player).ToList().ForEach(x => x.direction = -1);
+                    NPC.position = arena.position + NPC.Size;
+                    NPC.velocity *= 0;
+                    cutscene.screenPosition += (NPC.Center - cutscene.screenPosition) * 0.05f;
+                    });
+                cutscene.AddSequence(1, () =>
+                {
+                    Main.NewText("But enough cock rating, time for the action test");
+                });
+                cutscene.AddSequence(180, () =>
+                {
+                    NPC.velocity *= 0.98f;
+                    cutscene.screenPosition += (NPC.Center - cutscene.screenPosition) * 0.05f;
+                });
+                cutscene.AddSequence(120, () =>
+                {
+                    cutscene.screenPosition += (Main.LocalPlayer.Center - cutscene.screenPosition) * 0.05f;
+                }, false);
             }
 
             return base.PreAI();

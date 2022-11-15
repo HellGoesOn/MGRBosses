@@ -1,4 +1,5 @@
 using MGRBosses.Content.Buffs;
+using MGRBosses.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
@@ -24,6 +25,15 @@ namespace MGRBosses
                 Filters.Scene["Shockwave"] = new Filter(new ScreenShaderData(screenRef, "Shockwave"), EffectPriority.VeryHigh);
                 Filters.Scene["Shockwave"].Load();
             }
+
+            On.Terraria.Main.Update += Main_Update;
+            On.Terraria.Main.DrawDust += Main_DrawDust;
+        }
+
+        public override void Unload()
+        {
+            On.Terraria.Main.Update -= Main_Update;
+            On.Terraria.Main.DrawDust -= Main_DrawDust;
         }
 
         //move away to ParrySystem
@@ -127,6 +137,20 @@ namespace MGRBosses
                          1
                      );
             #endregion
+        }
+
+        private void Main_DrawDust(On.Terraria.Main.orig_DrawDust orig, Main self)
+        {
+            orig(self);
+            Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Additive, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
+            FallOffEffect.DrawEffects();
+            Main.spriteBatch.End();
+        }
+
+        private void Main_Update(On.Terraria.Main.orig_Update orig, Main self, GameTime gameTime)
+        {
+            orig(self, gameTime);
+            FallOffEffect.UpdateAll();
         }
     }
 }
