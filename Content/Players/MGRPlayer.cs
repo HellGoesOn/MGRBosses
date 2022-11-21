@@ -21,7 +21,6 @@ namespace MGRBosses.Content.Players
     {
         public int parryCooldown;
         public int parryTime;
-        public int spinTime;
         public float visualDecay;
 
         private bool usedParry;
@@ -164,11 +163,13 @@ namespace MGRBosses.Content.Players
             if (parryTime > 0) {
                 int dir_m = Player.direction; // Direction multiplier
                 var vec = new Vector2(-10 * dir_m, -24);
-                var vec2 = new Vector2(10 * dir_m, 0);
+
+                var vec2 = new Vector2(10 * dir_m, 6);
                 float angle = (Player.Center + vec - Player.Center).ToRotation();
                 float angle2 = (Player.Center + vec2 - Player.Center).ToRotation();
-                Player.SetCompositeArmFront(true, CompositeArmStretchAmount.Full, angle - MathHelper.PiOver2); 
-                Player.SetCompositeArmBack(true, CompositeArmStretchAmount.Full, angle2 - MathHelper.PiOver2); 
+
+                Player.SetCompositeArmFront(true, CompositeArmStretchAmount.Full, angle + visualDecay * dir_m - MathHelper.PiOver2); 
+                Player.SetCompositeArmBack(true, CompositeArmStretchAmount.Full, angle2 - visualDecay * dir_m - MathHelper.PiOver2); 
             }
         }
 
@@ -186,10 +187,6 @@ namespace MGRBosses.Content.Players
 
             if(parryTime > 0) {
                 parryTime--;
-            }
-
-            if(spinTime > 0) {
-                spinTime--;
             }
 
             if(parryCooldown > 0) {
@@ -223,9 +220,8 @@ namespace MGRBosses.Content.Players
         public void ResetParry()
         {
             var immuneTime = 20;
-            if(parryTime >= 55) {
+            if(parryTime >= 40) {
                 //immuneTime = 160;
-                spinTime = 60;
             }
 
             Player.SetImmuneTimeForAllTypes(immuneTime);
@@ -233,6 +229,7 @@ namespace MGRBosses.Content.Players
             Main.NewText("Parried!");
             Player.velocity = new Vector2(-Player.direction * 3.5f, 0);
             parryCooldown = 0;
+            parryTime = immuneTime;
             SoundEngine.PlaySound(SoundID.Item37, Player.position);
             visualDecay = 0.42f;
         }

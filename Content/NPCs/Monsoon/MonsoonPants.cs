@@ -111,7 +111,7 @@ namespace MGRBosses.Content.NPCs
                 Attack_AimTime--;
             else
             {
-                Attack_AimTime = 30;
+                Attack_AimTime = 32;
             }
 
             if (Attack_AttemptCount <= 0)
@@ -132,7 +132,7 @@ namespace MGRBosses.Content.NPCs
             BlockDamage();
 
             if (Attack_AttemptCount > 0)
-                Attack_AimTime = 36;
+                Attack_AimTime = 38;
             else
                 Attack_AimTime = 2;
 

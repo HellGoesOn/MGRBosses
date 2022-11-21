@@ -31,7 +31,7 @@ namespace MGRBosses.Content.NPCs
             BlockDamage();
 
             if (Attack_AttemptCount > 0)
-                Attack_AimTime = 36;// + player.itemAnimation;
+                Attack_AimTime = 38;// + player.itemAnimation;
             else
                 Attack_AimTime = 2;
 
