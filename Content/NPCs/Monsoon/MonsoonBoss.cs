@@ -7,6 +7,8 @@ using System;
 using System.Linq;
 using Terraria;
 using Terraria.ModLoader;
+using MGRBosses.Core;
+using MGRBosses.Content.Projectiles.Monsoon;
 
 namespace MGRBosses.Content.NPCs
 {
@@ -130,6 +132,23 @@ namespace MGRBosses.Content.NPCs
         public override bool PreAI()
         {
             if(!initializedArena && NPC.HasPlayerTarget) {
+                NPC.AddOnParryAction(() =>
+                {
+                    if (state == AIState.SmokeAttack) {
+                        Projectile.NewProjectile(NPC.GetBossSpawnSource(NPC.target), NPC.Center, Vector2.Zero, ModContent.ProjectileType<Shockwave>(), 0, 0);
+                        Attack_AimTime = (float)(CURRENT_AIM_TIME_MAX * 0.25);
+                    }
+
+                    if (state == AIState.AttackChain) {
+                        NPC.velocity.X = -NPC.direction * 2.4f;
+                        DoParry(/*player*/);
+                    }
+
+                    if (state == AIState.MagneticSpin) {
+                        BlockDamage();
+
+                    }
+                });
                 initializedArena = true;
 
                 var targetData = NPC.GetTargetData();
@@ -158,12 +177,12 @@ namespace MGRBosses.Content.NPCs
                 cutscene.AddSequence(60, () =>
                 {
                     cutscene.Actors.Where(x => x is Player).ToList().ForEach(x => x.direction = -1);
-                    cutscene.screenPosition += (arena.Center + new Vector2(-180, 60) - cutscene.screenPosition) * 0.05f;
+                    cutscene.screenPosition += (arena.Center + new Vector2(-180, 60) - cutscene.screenPosition) * 0.025f;
                 });
                 cutscene.AddSequence(60, () =>
                 {
                     cutscene.Actors.Where(x => x is Player).ToList().ForEach(x => x.direction = 1);
-                    cutscene.screenPosition += (arena.Center + new Vector2(180, 60) - cutscene.screenPosition) * 0.05f;
+                    cutscene.screenPosition += (arena.Center + new Vector2(180, 60) - cutscene.screenPosition) * 0.025f;
                 });
                 cutscene.AddSequence(180, () =>
                 {
@@ -277,7 +296,7 @@ namespace MGRBosses.Content.NPCs
                 switch (state) {
                     case AIState.Spawn:
                         state = AIState.Run;
-                        NPC.ai[0] = 69f;
+                        NPC.ai[0] = 5f;
                         NPC.Center = new Vector2(PlayerTarget.Center.X + 700 * PlayerTarget.direction, PlayerTarget.Center.Y - 16);
                         break;
                     case AIState.Idle:

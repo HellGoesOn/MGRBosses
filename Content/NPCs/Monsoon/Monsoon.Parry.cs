@@ -19,28 +19,6 @@ namespace MGRBosses.Content.NPCs
             "CATCH ME IF YOU CAN"
         };
 
-        public override void OnHitByItem(Player player, Item item, int damage, float knockback, bool crit)
-        {
-            if (!player.HasBuff<ParryBuff>())
-                return;
-
-            if (state == AIState.SmokeAttack && Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && player.direction != NPC.direction) {
-                SoundEngine.PlaySound(SoundID.Item37, NPC.position);
-                Projectile.NewProjectile(NPC.GetBossSpawnSource(NPC.target), NPC.Center, Vector2.Zero, ModContent.ProjectileType<Shockwave>(), 0, 0);
-                Attack_AimTime = (float)(CURRENT_AIM_TIME_MAX * 0.25);
-            }
-
-            if (state == AIState.AttackChain && Attack_AimTime <= 12 && Attack_AimTime >= 4 && player.direction != NPC.direction) {
-                DoParry(player);
-            }
-
-            if (state == AIState.MagneticSpin) {
-                player.velocity.X = -4f * player.direction;
-                BlockDamage();
-
-            }
-        }
-
         private void BlockDamage()
         {
             NPC.damage = 0;
@@ -48,16 +26,16 @@ namespace MGRBosses.Content.NPCs
             Projectile.NewProjectile(NPC.GetBossSpawnSource(NPC.target), NPC.Center, Vector2.Zero, ModContent.ProjectileType<Shockwave>(), 0, 0);
         }
 
-        private void DoParry(Player player)
+        private void DoParry(/*Player player*/)
         {
             BlockDamage();
 
             if (Attack_AttemptCount > 0)
-                Attack_AimTime = 30 + player.itemAnimation;
+                Attack_AimTime = 36;// + player.itemAnimation;
             else
                 Attack_AimTime = 2;
 
-            player.velocity = new Vector2(-player.direction * 3.5f, 0);
+            //player.velocity = new Vector2(-player.direction * 3.5f, 0);
         }
 
         public override void ModifyHitByItem(Player player, Item item, ref int damage, ref float knockback, ref bool crit)
@@ -122,25 +100,6 @@ namespace MGRBosses.Content.NPCs
                         break;
                     }
                 }
-            }
-        }
-
-        public override void OnHitByProjectile(Projectile projectile, int damage, float knockback, bool crit)
-        {
-            if (!Main.player[projectile.owner].HasBuff<ParryBuff>())
-                return;
-
-            if (Attack_AimTime > CURRENT_AIM_TIME_MAX * 0.25 && Attack_AttemptCount > 0 && projectile.direction != NPC.direction) {
-                SoundEngine.PlaySound(SoundID.Item37, NPC.position);
-                Attack_AimTime = (float)(CURRENT_AIM_TIME_MAX * 0.25);
-            }
-
-            if (state == AIState.AttackChain && Attack_AimTime <= 24 && Attack_AimTime >= 14 && projectile.direction != NPC.direction) {
-                DoParry(Main.player[projectile.owner]);
-            }
-
-            if (state == AIState.MagneticSpin) {
-                BlockDamage();
             }
         }
     }

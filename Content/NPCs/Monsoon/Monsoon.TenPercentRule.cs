@@ -1,5 +1,6 @@
 ﻿using MGRBosses.Content.Players;
 using MGRBosses.Content.Projectiles.Monsoon;
+using MGRBosses.Content.Systems.Cinematic;
 using Microsoft.Xna.Framework;
 using System;
 using Terraria;
@@ -17,10 +18,14 @@ namespace MGRBosses.Content.NPCs
                 Attack_AimTime = 240;
                 intendedPosition = PlayerTarget.Center + new Vector2(NPC.width * 0.5f + 400 * PlayerTarget.direction, -400);
 
-                if (!Main.dedServ)
-                    Main.LocalPlayer.GetModPlayer<MGRPlayer>().SetCameraTarget(intendedPosition + new Vector2(0, 120), 0.14f, NPC);
+                    var scene =
+                    CinematicSystem.AddCinematicScene();
+                    scene.AddSequence(240, () =>
+                    {
+                        scene.screenPosition += (intendedPosition + new Vector2(0, 120) - scene.screenPosition) * 0.025f;
+                    });
 
-                beganTenPercentAttack = true;
+                    beganTenPercentAttack = true;
             }
 
             if (Attack_AimTime == 160) {

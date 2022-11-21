@@ -42,9 +42,11 @@ namespace MGRBosses.Content.Systems.Cinematic
                 Main.screenPosition = Scenes[0].ScreenPosition;
         }
 
-        public static CinematicScene AddCinematicScene()
+        public static CinematicScene AddCinematicScene(bool noDefaultPosition = false)
         {
             var result = new CinematicScene();
+            if(!noDefaultPosition)
+            result.screenPosition = Main.screenPosition + new Vector2(Main.screenWidth * 0.5f, Main.screenHeight * 0.5f);
             ModContent.GetInstance<CinematicSystem>().Scenes.Add(result);
 
             return result;

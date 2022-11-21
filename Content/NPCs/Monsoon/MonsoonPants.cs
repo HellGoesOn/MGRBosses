@@ -1,5 +1,6 @@
 ﻿using MGRBosses.Content.Buffs;
 using MGRBosses.Content.Projectiles.Monsoon;
+using MGRBosses.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -16,6 +17,8 @@ namespace MGRBosses.Content.NPCs
 {
     public class MonsoonPants : ModNPC
     {
+        private bool init;
+
         public override string Texture => "MGRBosses/Content/Textures/Monsoon/PH";
 
         public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
@@ -34,6 +37,20 @@ namespace MGRBosses.Content.NPCs
             NPC.aiStyle = -1;
             NPC.chaseable = false;
             speed = 8f;
+        }
+
+        public override bool PreAI()
+        {
+            if(!init) {
+                init = true; 
+                NPC.AddOnParryAction(() =>
+                {
+                    NPC.velocity.X = -NPC.direction * 2.4f;
+                    DoParry(/*player*/);
+                });
+            }
+
+            return base.PreAI();
         }
 
         public override void AI()
@@ -103,25 +120,6 @@ namespace MGRBosses.Content.NPCs
             }
         }
 
-        public override void OnHitByItem(Player player, Item item, int damage, float knockback, bool crit)
-        {
-            if (!player.HasBuff<ParryBuff>())
-                return;
-
-            if (Attack_AimTime <= 12 && Attack_AimTime >= 4 && player.direction != NPC.direction)
-            {
-                DoParry(player);
-            }
-        }
-
-        public override void OnHitByProjectile(Projectile projectile, int damage, float knockback, bool crit)
-        {
-            if(Attack_AimTime <= 24 && Attack_AimTime >= 14 && projectile.direction != NPC.direction)
-            {
-                DoParry(Main.player[projectile.owner]);
-            }
-        }
-
         private void BlockDamage()
         {
             NPC.damage = 0;
@@ -129,16 +127,16 @@ namespace MGRBosses.Content.NPCs
             Projectile.NewProjectile(NPC.GetBossSpawnSource(NPC.target), NPC.Center, Vector2.Zero, ModContent.ProjectileType<Shockwave>(), 0, 0);
         }
 
-        private void DoParry(Player player)
+        private void DoParry()
         {
             BlockDamage();
 
             if (Attack_AttemptCount > 0)
-                Attack_AimTime = 30 + player.itemAnimation;
+                Attack_AimTime = 36;
             else
                 Attack_AimTime = 2;
 
-            player.velocity = new Vector2(-player.direction * 3.5f, 0);
+            NPC.velocity *= 0f;
         }
 
         private float speed;

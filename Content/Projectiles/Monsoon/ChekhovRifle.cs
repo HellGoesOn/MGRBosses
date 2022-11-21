@@ -1,6 +1,7 @@
 ﻿using MGRBosses.Content.NPCs;
 using MGRBosses.Content.Players;
 using MGRBosses.Content.Systems.Arenas;
+using MGRBosses.Content.Systems.Cinematic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -53,6 +54,12 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                 if (arena != null) {
                     arena.Participants.Add(Projectile);
                 }
+                var scene =
+                    CinematicSystem.AddCinematicScene();
+                scene.AddSequence(180, () =>
+                {
+                    scene.screenPosition += (Projectile.Center + new Vector2(0, 32) - scene.screenPosition) * 0.025f;
+                });
             }
             return base.PreAI();
         }
@@ -91,7 +98,7 @@ namespace MGRBosses.Content.Projectiles.Monsoon
                     Projectile.damage = 60000;
 
                 Projectile.rotation = (Projectile.Center - Main.player[monsoon.target].Center).SafeNormalize(-Vector2.UnitY).ToRotation() + MathHelper.PiOver2;
-                Main.LocalPlayer.GetModPlayer<MGRPlayer>().SetCameraTarget(Projectile.Center + new Vector2(0, 32), 0.2f, Projectile);
+                
                 Projectile.velocity = -new Vector2(1, 0).RotatedBy(Projectile.rotation - MathHelper.PiOver2) * 26f;
             }
 
@@ -126,7 +133,6 @@ namespace MGRBosses.Content.Projectiles.Monsoon
 
             if (!preparedForAttack) {
                 drawAngle = Projectile.rotation;
-                Main.LocalPlayer.GetModPlayer<MGRPlayer>().SetCameraTarget(Projectile.Center + new Vector2(0, 32), 0.2f, Projectile);
                 if (Projectile.ai[1] > 0 && Projectile.ai[1] < 40) {
                     Projectile.velocity.Y = 0;
                     Projectile.Center += new Vector2(Main.rand.Next(-4, 5), -Main.rand.Next(5));

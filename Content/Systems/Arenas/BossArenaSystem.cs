@@ -46,7 +46,7 @@ namespace MGRBosses.Content.Systems.Arenas
 
         public override void PostDrawTiles()
         {
-            Main.spriteBatch.Begin(SpriteSortMode.FrontToBack, BlendState.Additive);
+            Main.spriteBatch.Begin(SpriteSortMode.FrontToBack, BlendState.Additive, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
             foreach (var arena in Arenas) {
                 MGRBosses.DrawBorderedRectangle(arena.position - new Vector2(8, 0) - Main.screenPosition, 8, (int)arena.size.Y + 8, Color.Orange * 0.5f, Color.OrangeRed * 0.75f);
                 MGRBosses.DrawBorderedRectangle(arena.position - new Vector2(8, 0) - Main.screenPosition, (int)arena.size.X + 16, 8, Color.Orange * 0.5f, Color.OrangeRed * 0.75f);

@@ -1,6 +1,7 @@
 ﻿using MGRBosses.Content.Players;
 using MGRBosses.Content.Projectiles.Monsoon;
 using MGRBosses.Content.Systems.Arenas;
+using MGRBosses.Content.Systems.Cinematic;
 using Microsoft.Xna.Framework;
 using System;
 using Terraria;
@@ -31,10 +32,15 @@ namespace MGRBosses.Content.NPCs
             if (!prepedThrowAttack) {
                 intendedPosition = PlayerTarget.position + new Vector2(NPC.width * 0.5f, -400);
 
-                if (!Main.dedServ)
-                    Main.LocalPlayer.GetModPlayer<MGRPlayer>().SetCameraTarget(intendedPosition + new Vector2(0, 120), 0.14f, NPC);
+                var time = throwAttackLengthBase * 2 + totalProjectileCount * 60;
+                var scene =
+                CinematicSystem.AddCinematicScene();
+                scene.AddSequence(time, () =>
+                {
+                    scene.screenPosition += (intendedPosition + new Vector2(0, 120) - scene.screenPosition) * 0.025f;
+                }, false);
 
-                targetThrowAttackLength = throwAttackLength = throwAttackLengthBase * 2 + totalProjectileCount * 60;
+                targetThrowAttackLength = throwAttackLength = time;
                 currentThrownProjectileCount = 0;
                 prepedThrowAttack = true;
                 totalProjectileCount++;
@@ -51,18 +57,23 @@ namespace MGRBosses.Content.NPCs
             if (throwAttackLength > 0)
                 throwAttackLength--;
             else if (!secondWaveReached) {
-                targetThrowAttackLength = throwAttackLength = throwAttackLengthBase * 2 + totalProjectileCount * 60;
+                var time = targetThrowAttackLength = throwAttackLength = throwAttackLengthBase * 2 + totalProjectileCount * 60;
                 totalProjectileCount++;
                 currentThrownProjectileCount = 0;
                 secondWaveReached = true;
+                var scene =
+                CinematicSystem.AddCinematicScene();
+                scene.screenPosition = Main.screenPosition + new Vector2(Main.screenWidth * 0.5f, Main.screenHeight * 0.5f);
+                scene.AddSequence(time, () =>
+                {
+                    scene.screenPosition += (intendedPosition + new Vector2(0, 120) - scene.screenPosition) * 0.025f;
+                }, false);
             } else {
 
                 currentAttack = 1;
                 magnetizedTime = 1800;
                 state = AIState.Idle;
                 ResetAI(40);
-                if (!Main.dedServ)
-                    Main.LocalPlayer.GetModPlayer<MGRPlayer>().ResetCameraOverride();
             }
 
             NPC.position = Vector2.Lerp(NPC.position, intendedPosition, 0.25f);
@@ -113,7 +124,7 @@ namespace MGRBosses.Content.NPCs
                 if (Main.netMode != NetmodeID.MultiplayerClient)
                     pantsId = NPC.NewNPC(NPC.GetBossSpawnSource(NPC.target), (int)NPC.Center.X, (int)NPC.Center.Y, ModContent.NPCType<MonsoonPants>(), 0, 40, 4, 0, 0, NPC.target);
 
-                ModContent.GetInstance<BossArenaSystem>().Arenas[arenaId].Participants.Add(Main.npc[pantsId]);
+                BossArenaSystem.GetArenaByAlias("MonsoonArena")?.Participants.Add(Main.npc[pantsId]);
             }
 
             if (pantsId == -1 && Attack_AimTime <= 239)

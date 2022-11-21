@@ -5,26 +5,56 @@ using MGRBosses.Content.Systems.Arenas;
 using MGRBosses.Content.Systems.Cinematic;
 using MGRBosses.Core;
 using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.GameInput;
 using Terraria.ModLoader;
+using static Terraria.Player;
+using Terraria.ID;
+using Terraria.Audio;
+using MGRBosses.Content.NPCs;
 
 namespace MGRBosses.Content.Players
 {
     public class MGRPlayer : ModPlayer
     {
+        public int parryCooldown;
+        public int parryTime;
+        public int spinTime;
+        public float visualDecay;
+
         private bool usedParry;
 
         public List<int> MissedHitsQueue;
 
-        public CameraOverride CameraOverride { get; set; }
-
         public bool HasActiveBladeMode => Player.ownedProjectileCounts[ModContent.ProjectileType<BladeModeProjectile>()] > 0;
+
+        public override bool PreHurt(bool pvp, bool quiet, ref int damage, ref int hitDirection, ref bool crit, ref bool customDamage, ref bool playSound, ref bool genGore, ref PlayerDeathReason damageSource, ref int cooldownCounter)
+        {
+            if (parryTime >= 40 && hitDirection != Player.direction) {
+                return false;
+            }
+            return base.PreHurt(pvp, quiet, ref damage, ref hitDirection, ref crit, ref customDamage, ref playSound, ref genGore, ref damageSource, ref cooldownCounter);
+        }
+
+        public override void OnHitByNPC(NPC npc, int damage, bool crit)
+        {
+            if (parryTime >= 40 && Player.direction != npc.direction) {
+                MGRGlobalNPC.DoOnParry(npc);
+                ResetParry();
+            }
+            base.OnHitByNPC(npc, damage, crit);
+        }
+
+        public override void OnHitByProjectile(Projectile proj, int damage, bool crit)
+        {
+            if (parryTime >= 40) {
+                ResetParry();
+                proj.velocity *= -1;
+                proj.friendly = true;
+            }
+        }
 
         public override void ProcessTriggers(TriggersSet triggersSet)
         {
@@ -34,6 +64,16 @@ namespace MGRBosses.Content.Players
                     Player.BlockInputs();
                 }
             }
+
+            if (parryTime > 0)
+                Player.BlockInputs();
+
+            if(InputSystem.Parry.JustPressed && parryCooldown <= 0 && Player.HeldItem != null
+                && Player.HeldItem.CountsAsClass<MeleeDamageClass>()) {
+                parryCooldown = 60;
+                parryTime = 60;
+            }
+
             if(InputSystem.BladeMode.JustPressed && !HasActiveBladeMode)
             {
                 Projectile.NewProjectile(Player.GetSource_Misc("BladeMode"),
@@ -43,7 +83,7 @@ namespace MGRBosses.Content.Players
                     0, 0, Main.myPlayer);
             }
         }
-
+        /*
         public void SetCameraTarget(Vector2 targetLocation, float speed = 0.15f, Entity source = null)
         {
             if(!CameraOverride.Active)
@@ -98,16 +138,16 @@ namespace MGRBosses.Content.Players
                 }
             }
         }
-
+        */
         public override void Initialize()
         {
-            CameraOverride = new CameraOverride(Main.screenPosition, Vector2.Zero);
+            //CameraOverride = new CameraOverride(Main.screenPosition, Vector2.Zero);
             MissedHitsQueue = new List<int>();
         }
 
         public override void UpdateDead()
         {
-            ResetCameraOverride();
+            //ResetCameraOverride();
         }
 
         public override void PreUpdateMovement()
@@ -119,16 +159,45 @@ namespace MGRBosses.Content.Players
             }
         }
 
-        public override void ResetEffects()
+        public override void DrawEffects(PlayerDrawSet drawInfo, ref float r, ref float g, ref float b, ref float a, ref bool fullBright)
         {
+            if (parryTime > 0) {
+                int dir_m = Player.direction; // Direction multiplier
+                var vec = new Vector2(-10 * dir_m, -24);
+                var vec2 = new Vector2(10 * dir_m, 0);
+                float angle = (Player.Center + vec - Player.Center).ToRotation();
+                float angle2 = (Player.Center + vec2 - Player.Center).ToRotation();
+                Player.SetCompositeArmFront(true, CompositeArmStretchAmount.Full, angle - MathHelper.PiOver2); 
+                Player.SetCompositeArmBack(true, CompositeArmStretchAmount.Full, angle2 - MathHelper.PiOver2); 
+            }
+        }
+
+        public override void ResetEffects()
+        {/*
             if (CameraOverride.Source != null && !CameraOverride.Source.active)
             {
                 ResetCameraOverride();
             }
 
-            CameraOverride.FailSafe = Player.Center - new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f;
+            CameraOverride.FailSafe = Player.Center - new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f;*/
 
-            foreach(int i in MissedHitsQueue)
+            if (visualDecay > 0)
+                visualDecay -= 0.02f;
+
+            if(parryTime > 0) {
+                parryTime--;
+            }
+
+            if(spinTime > 0) {
+                spinTime--;
+            }
+
+            if(parryCooldown > 0) {
+                Player.velocity *= 0f;
+                parryCooldown--;
+            }
+
+            foreach (int i in MissedHitsQueue)
             {
                 Main.combatText[i].text = "MISS";
                 Main.combatText[i].color = Color.Red;
@@ -149,6 +218,23 @@ namespace MGRBosses.Content.Players
                 usedParry = false;
 
             MissedHitsQueue.Clear();
+        }
+
+        public void ResetParry()
+        {
+            var immuneTime = 20;
+            if(parryTime >= 55) {
+                //immuneTime = 160;
+                spinTime = 60;
+            }
+
+            Player.SetImmuneTimeForAllTypes(immuneTime);
+            Player.immuneNoBlink = true;
+            Main.NewText("Parried!");
+            Player.velocity = new Vector2(-Player.direction * 3.5f, 0);
+            parryCooldown = 0;
+            SoundEngine.PlaySound(SoundID.Item37, Player.position);
+            visualDecay = 0.42f;
         }
     }
 }
