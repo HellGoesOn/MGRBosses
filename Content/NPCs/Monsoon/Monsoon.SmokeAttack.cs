@@ -75,18 +75,20 @@ namespace MGRBosses.Content.NPCs
                 Attack_AimTime = CURRENT_AIM_TIME_MAX;
             }
         }
-
+        private bool threwSmokes;
         private void SmokePrepare()
         {
             if (Attack_AimTime >= 90) {
                 monsoonFog.Clear();
                 NPC.velocity *= 0f;
                 Say(smokeQuotes[Main.rand.Next(smokeQuotes.Length)]);
+                threwSmokes = false;
             }
             if (Attack_AimTime > 0)
                 Attack_AimTime--;
 
-            if (Attack_AimTime == 80) {
+            if (animations[currentAnimation].FrameCurrent == 9 && !threwSmokes) {
+                threwSmokes = true;
                 for (int i = 0; i < 600; i++) {
                     MonsoonFog fog = new();
                     float halfWidth = Main.screenWidth * 0.5f;
@@ -105,11 +107,13 @@ namespace MGRBosses.Content.NPCs
                 fogDensity += 0.05f;
 
             if (Attack_AimTime == 50) {
+                currentAnimation = "Jump";
                 NPC.velocity = -(PlayerTarget.Center - NPC.Center).SafeNormalize(-Vector2.UnitY) * 12f - new Vector2(0, 16);
             }
 
             if (Attack_AimTime <= 0) {
                 monsoonOpacity = 0f;
+
                 state = AIState.SmokeAttack;
 
                 Attack_AttemptCount = 5;
@@ -117,6 +121,10 @@ namespace MGRBosses.Content.NPCs
                 Attack_AimTime = CURRENT_AIM_TIME_MAX;
 
                 Attack_Direction = Main.rand.Next((int)AttacksFrom.Right + 1);
+            }
+            if (currentAnimation != "Jump") {
+                currentAnimation = "SmokeThrow";
+                animations[currentAnimation].Update();
             }
         }
     }

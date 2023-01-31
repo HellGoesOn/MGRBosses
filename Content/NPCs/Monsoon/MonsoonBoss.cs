@@ -9,6 +9,7 @@ using Terraria;
 using Terraria.ModLoader;
 using MGRBosses.Core;
 using MGRBosses.Content.Projectiles.Monsoon;
+using System.Collections.Generic;
 
 namespace MGRBosses.Content.NPCs
 {
@@ -95,11 +96,13 @@ namespace MGRBosses.Content.NPCs
 
         public override void SetDefaults()
         {
+            animations = new Dictionary<string, SpriteAnimation>();
+            InitDrawing();
             NPC.npcSlots = 200f;
             NPC.noGravity = false;
             NPC.friendly = false;
-            NPC.width = 26;
-            NPC.height = 44;
+            NPC.width = 90;
+            NPC.height = 82;
             NPC.life = NPC.lifeMax = 10000;
             NPC.knockBackResist = 0f;
             NPC.aiStyle = -1;
@@ -152,13 +155,14 @@ namespace MGRBosses.Content.NPCs
                 initializedArena = true;
 
                 var targetData = NPC.GetTargetData();
-                arenaId = BossArenaSystem.CreateArena(new(targetData.Position + targetData.Size - new Vector2(900, 1600), new Vector2(1800, 800), NPC, Main.player[NPC.target]) { Alias = "MonsoonArena"});
+                arenaId = BossArenaSystem.CreateArena(new(targetData.Position + targetData.Size - new Vector2(1200, 1600), new Vector2(2400, 800), NPC, Main.player[NPC.target]) { Alias = "MonsoonArena"});
                 var cutscene = CinematicSystem.AddCinematicScene();
                 cutscene.Actors.Add(NPC);
                 foreach(Player plr in Main.player.Where(x => x.whoAmI != 255)) {
                     cutscene.Actors.Add(plr);
                 }
 
+                Main.StartRain();
                 var arena = BossArenaSystem.GetArenaByAlias("MonsoonArena");
                 cutscene.screenPosition = arena.Center + new Vector2(0, 240);
                 cutscene.AddSequence(60, () => {
@@ -229,9 +233,6 @@ namespace MGRBosses.Content.NPCs
             if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active) {
                 NPC.TargetClosest(true);
             }
-
-            if (!Main.IsItRaining)
-                Main.StartRain();
 
             NPC.direction = NPC.Center.X > PlayerTarget.Center.X ? -1 : 1;
 
@@ -377,6 +378,7 @@ namespace MGRBosses.Content.NPCs
 
         private void Idle()
         {
+            currentAnimation = "Idle";
             rotation = Utils.AngleLerp(rotation, 0f, 0.12f);
 
             monsoonOpacity = 1f;
@@ -408,6 +410,9 @@ namespace MGRBosses.Content.NPCs
                 NPC.velocity.X = speed * dir;
 
             NPC.velocity.Y = 8f;
+
+            currentAnimation = "Walk";
+            animations[currentAnimation].Update();
         }
 
         private void PickNextAttack()
@@ -457,7 +462,7 @@ namespace MGRBosses.Content.NPCs
         private void Retreat()
         {
             if (NPC.ai[0] == nextMoveDelayPlusOne) {
-                NPC.velocity = new Vector2(-8 * NPC.direction, -10);
+                NPC.velocity = new Vector2(-8 * NPC.direction, -12.5f);
                 NPC.ai[0]--;
             }
             if (NPC.ai[0] > 0)
@@ -466,6 +471,8 @@ namespace MGRBosses.Content.NPCs
                 ResetAI(10);
                 state = AIState.Idle;
             }
+
+            currentAnimation = "Jump";
         }
 
         private void Say(string thing)
